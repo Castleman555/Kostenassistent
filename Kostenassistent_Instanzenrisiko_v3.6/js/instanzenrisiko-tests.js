@@ -25,6 +25,10 @@
     });
 
     const normal = global.InstanzenrisikoBerechnung.calculate(makeInput(), tables);
+    [1.3, 1.6, 2.3].forEach((expectedFactor, index) => {
+      assert(normal.instances[index].claimantAttorneyCosts.groups[0].procedureFactor === expectedFactor, `Standardfaktor Verfahrensgebühr Instanz ${index + 1} Klägerseite muss ${expectedFactor} sein.`);
+      assert(normal.instances[index].defendantAttorneyCosts.groups[0].procedureFactor === expectedFactor, `Standardfaktor Verfahrensgebühr Instanz ${index + 1} Beklagtenseite muss ${expectedFactor} sein.`);
+    });
     assert(normal.instances.length === 3, "Drei Instanzen müssen berechnet werden.");
     assert(normal.instances[2].claimantAttorneyCosts.groups[0].procedureFactor === 2.3, "Verfahrensgebühr III. Instanz Klägerseite muss 2,3 sein.");
     assert(normal.instances[2].defendantAttorneyCosts.groups[0].procedureFactor === 2.3, "Verfahrensgebühr III. Instanz Beklagtenseite muss 2,3 sein.");
@@ -199,6 +203,9 @@
 
     const sourceResponse = await fetch("js/instanzenrisiko-ausgabe.js", { cache: "no-store" });
     const sourceText = await sourceResponse.text();
+    assert(!/factorInput\([^;\n]*procedureFactor/.test(sourceText), "Der Verfahrensgebührenfaktor darf kein editierbares Faktor-Feld besitzen.");
+    assert(sourceText.includes("Fest vorgegebener Faktor Verfahrensgebühr"), "Der Verfahrensgebührenfaktor muss als fest vorgegebene Ausgabe angezeigt werden.");
+    assert(sourceText.includes("procedureFactor: configuration.instances[instance - 1].procedureFee"), "Gespeicherte Fälle müssen auf die instanzabhängigen Standardfaktoren normalisiert werden.");
     assert(!/data-group-factor=[^>]*increaseFactor/.test(sourceText), "Der Erhöhungsfaktor Nr. 1008 VV RVG darf kein editierbares Faktor-Feld besitzen.");
     assert(sourceText.includes("<output aria-label=\"Automatisch ermittelter Faktor Erhöhung"), "Der automatisch ermittelte Erhöhungsfaktor muss als Ausgabe angezeigt werden.");
     assert(sourceText.includes("data-vat-rate=\"${key}\""), "Die Umsatzsteuerzeile muss je Kostenbereich ein editierbares Feld besitzen.");

@@ -109,7 +109,7 @@
           const old = saved.groupParameters?.instances?.[instance]?.[side]?.[groupId] || {};
           result.instances[instance][side][groupId] = {
             feeValues: Object.fromEntries(POSITIONS.map((position) => [position, getValidSavedCent(old.feeValues?.[position], uiState.feeValues[instance][side][position])])),
-            procedureFactor: Number.isFinite(Number(old.procedureFactor)) ? Number(old.procedureFactor) : configuration.instances[instance - 1].procedureFee,
+            procedureFactor: configuration.instances[instance - 1].procedureFee,
                 hearingFactor: Number.isFinite(Number(old.hearingFactor)) ? Number(old.hearingFactor) : uiState.hearingFactors[instance][side],
             settlementFactor: Number.isFinite(Number(old.settlementFactor)) ? Number(old.settlementFactor) : (instance === 1 ? 1.0 : 1.3),
             otherExpensesCent: getValidSavedCent(old.otherExpensesCent, uiState.otherExpenses[instance][side]),
@@ -607,8 +607,10 @@
     let factorCell;
     if (hearing) {
       factorCell = `<select data-hearing-factor="${context.instance}:${context.side}:${context.groupId}" aria-label="Faktor Terminsgebühr ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"}">${hearingOptions(context.instance, parameter.hearingFactor)}</select>`;
+    } else if (position === "procedure") {
+      factorCell = `<output aria-label="Fest vorgegebener Faktor Verfahrensgebühr ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"} Vertretungsgruppe ${context.groupId}">${formatFactor(parameter.procedureFactor)}</output>`;
     } else {
-      const factorField = position === "procedure" ? "procedureFactor" : position === "increase" ? "increaseFactor" : "settlementFactor";
+      const factorField = position === "increase" ? "increaseFactor" : "settlementFactor";
       factorCell = factorInput(`instance:${context.instance}:${context.side}:${context.groupId}:${factorField}`, parameter[factorField], `Faktor ${label} Vertretungsgruppe ${context.groupId}`);
     }
     return `<tr><th scope="row">${escapeHtml(label)}</th><td><input class="fee-value-input" type="text" inputmode="decimal" data-fee-value="${key}" value="${formatCent(value)}" aria-label="Gegenstandswert ${escapeHtml(label)} ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"}"></td><td>${factorCell}</td><td>${formatCent(amountCent || 0)}</td></tr>`;
