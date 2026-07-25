@@ -279,8 +279,11 @@
     const calculatedInput = { ...input, groupCredits };
     const pretrial = calculatePretrialCosts(calculatedInput.pretrial, { rvgFeeCent: pretrialRvg.lookup.feeCent, groups: pretrialFeeGroups }, configuration);
     const metadataCreditValueCent = pretrialFeeGroups[claimantGroups[0]?.groupId]?.creditValueCent ?? input.pretrial.creditValueCent;
+    const pretrialSettlementEndsProceedings = input.pretrial.enabled
+      && Object.values(input.pretrial.groupParameters || {}).some((group) => Boolean(group.settlementEnabled));
     let maxInstance = 3;
-    if (input.termination.instance) maxInstance = input.termination.instance;
+    if (pretrialSettlementEndsProceedings) maxInstance = 0;
+    else if (input.termination.instance) maxInstance = input.termination.instance;
     if (input.valueCent <= 100000) maxInstance = Math.min(maxInstance, 1);
     else if (input.valueCent <= 2500000) maxInstance = Math.min(maxInstance, 2);
     const instances = configuration.instances.filter((x) => x.number <= maxInstance).map((instance) => calculateInstance({ instance, input: calculatedInput, feeTables, configuration }));

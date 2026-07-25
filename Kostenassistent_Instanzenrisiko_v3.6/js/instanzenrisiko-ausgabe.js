@@ -276,6 +276,18 @@
     } else if (target.matches("[data-pretrial-settlement-enabled]")) {
       const groupId = target.dataset.pretrialSettlementEnabled;
       uiState.groupParameters.pretrial[groupId].settlementEnabled = target.checked;
+    } else if (target.matches("[data-instance-settlement-enabled]")) {
+      const instance = Number(target.dataset.instanceSettlementEnabled);
+      if (target.checked) {
+        elements.terminationInstance.value = String(instance);
+        uiState.termination = { instance, type: "comparison" };
+        updateTerminationOptions(false);
+        elements.terminationType.value = "comparison";
+      } else if (Number(elements.terminationInstance.value) === instance && elements.terminationType.value === "comparison") {
+        elements.terminationInstance.value = "";
+        uiState.termination = { instance: 0, type: "" };
+        updateTerminationOptions(false);
+      }
     } else if (target.matches("[data-pretrial-effective-date]")) {
       uiState.pretrialEffectiveDate = target.value || null;
     } else if (target.matches("[data-hearing-factor]")) {
@@ -526,10 +538,14 @@
   }
 
   function renderResult(result) {
+    const pretrialSettlementEndsProceedings = uiState.pretrialEnabled
+      && Object.values(uiState.groupParameters.pretrial).some((group) => Boolean(group.settlementEnabled));
     elements.pretrialSum.textContent = formatCent(result.summary.pretrialCent);
     [1, 2, 3].forEach((n) => {
       elements.sums[n].textContent = formatCent(result.summary[["", "firstInstanceCent", "secondInstanceCent", "thirdInstanceCent"][n]]);
-      elements.sums[n].closest("article").hidden = (n === 2 && uiState.valueCent <= 100000) || (n === 3 && uiState.valueCent <= 2500000);
+      elements.sums[n].closest("article").hidden = pretrialSettlementEndsProceedings
+        || (n === 2 && uiState.valueCent <= 100000)
+        || (n === 3 && uiState.valueCent <= 2500000);
     });
     elements.totalSum.textContent = formatCent(result.summary.totalRiskCent);
     elements.warnungen.hidden = result.warnings.length === 0; elements.warnungen.textContent = result.warnings.join(" ");
@@ -615,7 +631,10 @@
       const factorField = "increaseFactor";
       factorCell = factorInput(`instance:${context.instance}:${context.side}:${context.groupId}:${factorField}`, parameter[factorField], `Faktor ${label} Vertretungsgruppe ${context.groupId}`);
     }
-    return `<tr><th scope="row">${escapeHtml(label)}</th><td><input class="fee-value-input" type="text" inputmode="decimal" data-fee-value="${key}" value="${formatCent(value)}" aria-label="Gegenstandswert ${escapeHtml(label)} ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"}"></td><td>${factorCell}</td><td>${formatCent(amountCent || 0)}</td></tr>`;
+    const labelCell = position === "settlement" && context.side === "claimant"
+      ? `<label>${escapeHtml(label)} <input type="checkbox" data-instance-settlement-enabled="${context.instance}" ${uiState.termination.instance === context.instance && uiState.termination.type === "comparison" ? "checked" : ""} aria-label="Verfahren in ${roman(context.instance)}. Instanz durch Vergleich vollständig beenden"></label>`
+      : escapeHtml(label);
+    return `<tr><th scope="row">${labelCell}</th><td><input class="fee-value-input" type="text" inputmode="decimal" data-fee-value="${key}" value="${formatCent(value)}" aria-label="Gegenstandswert ${escapeHtml(label)} ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"}"></td><td>${factorCell}</td><td>${formatCent(amountCent || 0)}</td></tr>`;
   }
 
 

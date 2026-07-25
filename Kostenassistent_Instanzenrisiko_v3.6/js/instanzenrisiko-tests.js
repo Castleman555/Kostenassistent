@@ -34,6 +34,12 @@
       pretrial: { enabled: true, creditPlacement: "instance", party: oneParty, valueCent: 6000000, businessFactor: 1.3, effectiveDate: "2025-06-01", otherExpensesCent: 0, vatRate: 0.19, groupParameters: { 1: { settlementEnabled: true } } }
     }), tables);
     assert(pretrialSettlement.pretrial.claimant.groups[0].settlementFactor === 1.5, "Standardfaktor Einigungsgebühr Klägerseite vorgerichtlich muss 1,5 sein.");
+    assert(pretrialSettlement.instances.length === 0, "Eine aktivierte vorgerichtliche Einigungsgebühr muss alle gerichtlichen Instanzen ausschließen.");
+    assert(pretrialSettlement.summary.firstInstanceCent === 0 && pretrialSettlement.summary.secondInstanceCent === 0 && pretrialSettlement.summary.thirdInstanceCent === 0, "Bei vorgerichtlicher Einigung müssen alle Instanzsummen null sein.");
+    const pretrialSettlementDisabled = global.InstanzenrisikoBerechnung.calculate(makeInput({
+      pretrial: { enabled: false, creditPlacement: "none", party: oneParty, valueCent: 6000000, businessFactor: 1.3, effectiveDate: "2025-06-01", otherExpensesCent: 0, vatRate: 0.19, groupParameters: { 1: { settlementEnabled: true } } }
+    }), tables);
+    assert(pretrialSettlementDisabled.instances.length === 3, "Eine Einigungsgebühr in einem deaktivierten vorgerichtlichen Bereich darf Instanzen nicht ausschließen.");
     [1.0, 1.3, 1.3].forEach((expectedFactor, index) => {
       const instanceNumber = index + 1;
       const result = global.InstanzenrisikoBerechnung.calculate(makeInput({ termination: { instance: instanceNumber, type: "comparison" } }), tables);
@@ -92,6 +98,8 @@
     const creditAtInstance = global.InstanzenrisikoBerechnung.calculate(makeInput({ feeValues: creditValuesLow, pretrial: { ...placementBase, creditPlacement: "instance" } }), tables);
     assert(creditAtPretrial.pretrial.claimant.groups[0].creditCent === creditAtInstance.instances[0].claimantAttorneyCosts.groups[0].creditCent, "Der Anrechnungsbetrag muss an beiden Darstellungspositionen identisch sein.");
     assert(creditAtPretrial.summary.totalRiskCent === creditAtInstance.summary.totalRiskCent, "Das Gesamtrisiko darf sich beim Umschalten der Anrechnungsposition nicht ändern.");
+
+    assert(creditAtPretrial.instances.length === creditAtInstance.instances.length && creditAtPretrial.instances.length > 0, "Die Anrechnungsposition darf Anzahl und Sichtbarkeit der Instanzen nicht beeinflussen.");
 
     const exactlyThousand = global.InstanzenrisikoBerechnung.calculate(makeInput({ valueCent: 100000, feeValues: makeFeeValues(100000), pretrial: { enabled: false, creditPlacement: "none", creditValueCent: 100000, party: oneParty, valueCent: 100000, businessFactor: 1.3, effectiveDate: "2025-06-01", otherExpensesCent: 0, vatRate: 0.19 } }), tables);
     assert(exactlyThousand.instances.length === 1, "Bei genau 1.000,00 € darf nur die I. Instanz berechnet werden.");
@@ -222,6 +230,11 @@
     assert(sourceText.includes("Fest vorgegebener Faktor Einigungsgebühr ${roman(context.instance)}. Instanz"), "Die Einigungsgebührenfaktoren aller Instanzen und Parteiseiten müssen als fest vorgegebene Ausgaben angezeigt werden.");
     assert(sourceText.includes("settlementFactor: configuration.pretrial.settlementFee"), "Gespeicherte vorgerichtliche Fälle müssen auf den Standardfaktor normalisiert werden.");
     assert(sourceText.includes("settlementFactor: instance === 1 ? 1.0 : 1.3"), "Gespeicherte gerichtliche Fälle müssen auf die instanzabhängigen Standardfaktoren normalisiert werden.");
+    assert(sourceText.includes('data-instance-settlement-enabled="${context.instance}"'), "Die Klägerseite jeder dargestellten Instanz muss ein Vergleichskontrollkästchen erhalten.");
+    assert(sourceText.includes('position === "settlement" && context.side === "claimant"'), "Vergleichskontrollkästchen dürfen ausschließlich auf der Klägerseite erscheinen.");
+    assert(sourceText.includes('target.matches("[data-instance-settlement-enabled]")'), "Gerichtliche Vergleichskontrollkästchen müssen die Beendigungsparameter steuern.");
+    assert(sourceText.includes('elements.terminationType.value = "comparison"'), "Ein gerichtliches Vergleichskontrollkästchen muss die Beendigungsart Vergleich setzen.");
+    assert(sourceText.includes("pretrialSettlementEndsProceedings"), "Die aktivierte vorgerichtliche Einigungsgebühr muss die Instanzberechnung und -darstellung beenden.");
     assert(!/data-group-factor=[^>]*increaseFactor/.test(sourceText), "Der Erhöhungsfaktor Nr. 1008 VV RVG darf kein editierbares Faktor-Feld besitzen.");
     assert(sourceText.includes("<output aria-label=\"Automatisch ermittelter Faktor Erhöhung"), "Der automatisch ermittelte Erhöhungsfaktor muss als Ausgabe angezeigt werden.");
     assert(sourceText.includes("data-vat-rate=\"${key}\""), "Die Umsatzsteuerzeile muss je Kostenbereich ein editierbares Feld besitzen.");
