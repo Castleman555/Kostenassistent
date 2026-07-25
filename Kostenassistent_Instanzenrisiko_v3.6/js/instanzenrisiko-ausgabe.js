@@ -632,7 +632,7 @@
       factorCell = factorInput(`instance:${context.instance}:${context.side}:${context.groupId}:${factorField}`, parameter[factorField], `Faktor ${label} Vertretungsgruppe ${context.groupId}`);
     }
     const labelCell = position === "settlement" && context.side === "claimant"
-      ? `<label>${escapeHtml(label)} <input type="checkbox" data-instance-settlement-enabled="${context.instance}" ${uiState.termination.instance === context.instance && uiState.termination.type === "comparison" ? "checked" : ""} aria-label="Verfahren in ${roman(context.instance)}. Instanz durch Vergleich vollständig beenden"></label>`
+      ? `<label class="settlement-checkbox-label">${escapeHtml(label)} <input class="settlement-checkbox" type="checkbox" data-instance-settlement-enabled="${context.instance}" ${uiState.termination.instance === context.instance && uiState.termination.type === "comparison" ? "checked" : ""} aria-label="Verfahren in ${roman(context.instance)}. Instanz durch Vergleich vollständig beenden"></label>`
       : escapeHtml(label);
     return `<tr><th scope="row">${labelCell}</th><td><input class="fee-value-input" type="text" inputmode="decimal" data-fee-value="${key}" value="${formatCent(value)}" aria-label="Gegenstandswert ${escapeHtml(label)} ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"}"></td><td>${factorCell}</td><td>${formatCent(amountCent || 0)}</td></tr>`;
   }

@@ -231,6 +231,7 @@
     assert(sourceText.includes("settlementFactor: configuration.pretrial.settlementFee"), "Gespeicherte vorgerichtliche Fälle müssen auf den Standardfaktor normalisiert werden.");
     assert(sourceText.includes("settlementFactor: instance === 1 ? 1.0 : 1.3"), "Gespeicherte gerichtliche Fälle müssen auf die instanzabhängigen Standardfaktoren normalisiert werden.");
     assert(sourceText.includes('data-instance-settlement-enabled="${context.instance}"'), "Die Klägerseite jeder dargestellten Instanz muss ein Vergleichskontrollkästchen erhalten.");
+    assert(sourceText.includes('class="settlement-checkbox-label"') && sourceText.includes('class="settlement-checkbox"'), "Das Vergleichskontrollkästchen muss unmittelbar hinter der Bezeichnung sichtbar dargestellt werden.");
     assert(sourceText.includes('position === "settlement" && context.side === "claimant"'), "Vergleichskontrollkästchen dürfen ausschließlich auf der Klägerseite erscheinen.");
     assert(sourceText.includes('target.matches("[data-instance-settlement-enabled]")'), "Gerichtliche Vergleichskontrollkästchen müssen die Beendigungsparameter steuern.");
     assert(sourceText.includes('elements.terminationType.value = "comparison"'), "Ein gerichtliches Vergleichskontrollkästchen muss die Beendigungsart Vergleich setzen.");

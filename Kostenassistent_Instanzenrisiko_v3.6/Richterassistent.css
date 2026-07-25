@@ -321,6 +321,8 @@ a:focus-visible {
 }
 
 .data-table input { width: 100%; }
+.data-table .settlement-checkbox-label { display: inline-flex; align-items: center; gap: 7px; }
+.data-table input.settlement-checkbox { width: auto; margin: 0; flex: 0 0 auto; }
 .number-column { width: 64px; text-align: center !important; }
 .action-column { width: 76px; text-align: center !important; }
 .table-money-input { min-width: 150px; }
