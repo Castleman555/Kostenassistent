@@ -29,6 +29,17 @@
       assert(normal.instances[index].claimantAttorneyCosts.groups[0].procedureFactor === expectedFactor, `Standardfaktor Verfahrensgebühr Instanz ${index + 1} Klägerseite muss ${expectedFactor} sein.`);
       assert(normal.instances[index].defendantAttorneyCosts.groups[0].procedureFactor === expectedFactor, `Standardfaktor Verfahrensgebühr Instanz ${index + 1} Beklagtenseite muss ${expectedFactor} sein.`);
     });
+    assert(normal.pretrial.claimant.groups[0].settlementFactor === 0, "Eine deaktivierte vorgerichtliche Einigungsgebühr muss weiterhin den Berechnungsfaktor 0 ausweisen.");
+    const pretrialSettlement = global.InstanzenrisikoBerechnung.calculate(makeInput({
+      pretrial: { enabled: true, creditPlacement: "instance", party: oneParty, valueCent: 6000000, businessFactor: 1.3, effectiveDate: "2025-06-01", otherExpensesCent: 0, vatRate: 0.19, groupParameters: { 1: { settlementEnabled: true } } }
+    }), tables);
+    assert(pretrialSettlement.pretrial.claimant.groups[0].settlementFactor === 1.5, "Standardfaktor Einigungsgebühr Klägerseite vorgerichtlich muss 1,5 sein.");
+    [1.0, 1.3, 1.3].forEach((expectedFactor, index) => {
+      const instanceNumber = index + 1;
+      const result = global.InstanzenrisikoBerechnung.calculate(makeInput({ termination: { instance: instanceNumber, type: "comparison" } }), tables);
+      assert(result.instances[index].claimantAttorneyCosts.groups[0].settlementFactor === expectedFactor, `Standardfaktor Einigungsgebühr Instanz ${instanceNumber} Klägerseite muss ${expectedFactor} sein.`);
+      assert(result.instances[index].defendantAttorneyCosts.groups[0].settlementFactor === expectedFactor, `Standardfaktor Einigungsgebühr Instanz ${instanceNumber} Beklagtenseite muss ${expectedFactor} sein.`);
+    });
     assert(normal.instances.length === 3, "Drei Instanzen müssen berechnet werden.");
     assert(normal.instances[2].claimantAttorneyCosts.groups[0].procedureFactor === 2.3, "Verfahrensgebühr III. Instanz Klägerseite muss 2,3 sein.");
     assert(normal.instances[2].defendantAttorneyCosts.groups[0].procedureFactor === 2.3, "Verfahrensgebühr III. Instanz Beklagtenseite muss 2,3 sein.");
@@ -206,6 +217,11 @@
     assert(!/factorInput\([^;\n]*procedureFactor/.test(sourceText), "Der Verfahrensgebührenfaktor darf kein editierbares Faktor-Feld besitzen.");
     assert(sourceText.includes("Fest vorgegebener Faktor Verfahrensgebühr"), "Der Verfahrensgebührenfaktor muss als fest vorgegebene Ausgabe angezeigt werden.");
     assert(sourceText.includes("procedureFactor: configuration.instances[instance - 1].procedureFee"), "Gespeicherte Fälle müssen auf die instanzabhängigen Standardfaktoren normalisiert werden.");
+    assert(!/factorInput\([^;\n]*settlementFactor/.test(sourceText), "Der Einigungsgebührenfaktor darf kein editierbares Faktor-Feld besitzen.");
+    assert(sourceText.includes("Fest vorgegebener Faktor Einigungsgebühr Klägerseite vorgerichtlich"), "Der vorgerichtliche Einigungsgebührenfaktor muss als fest vorgegebene Ausgabe angezeigt werden.");
+    assert(sourceText.includes("Fest vorgegebener Faktor Einigungsgebühr ${roman(context.instance)}. Instanz"), "Die Einigungsgebührenfaktoren aller Instanzen und Parteiseiten müssen als fest vorgegebene Ausgaben angezeigt werden.");
+    assert(sourceText.includes("settlementFactor: configuration.pretrial.settlementFee"), "Gespeicherte vorgerichtliche Fälle müssen auf den Standardfaktor normalisiert werden.");
+    assert(sourceText.includes("settlementFactor: instance === 1 ? 1.0 : 1.3"), "Gespeicherte gerichtliche Fälle müssen auf die instanzabhängigen Standardfaktoren normalisiert werden.");
     assert(!/data-group-factor=[^>]*increaseFactor/.test(sourceText), "Der Erhöhungsfaktor Nr. 1008 VV RVG darf kein editierbares Faktor-Feld besitzen.");
     assert(sourceText.includes("<output aria-label=\"Automatisch ermittelter Faktor Erhöhung"), "Der automatisch ermittelte Erhöhungsfaktor muss als Ausgabe angezeigt werden.");
     assert(sourceText.includes("data-vat-rate=\"${key}\""), "Die Umsatzsteuerzeile muss je Kostenbereich ein editierbares Feld besitzen.");

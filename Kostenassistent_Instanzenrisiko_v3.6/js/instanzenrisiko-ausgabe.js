@@ -95,7 +95,7 @@
         businessFactor: Number.isFinite(Number(old.businessFactor)) ? Number(old.businessFactor) : uiState.businessFactor,
         settlementEnabled: Boolean(old.settlementEnabled),
         settlementValueCent: getValidSavedCent(old.settlementValueCent, uiState.valueCent),
-        settlementFactor: Number.isFinite(Number(old.settlementFactor)) ? Number(old.settlementFactor) : configuration.pretrial.settlementFee,
+        settlementFactor: configuration.pretrial.settlementFee,
         otherExpensesCent: getValidSavedCent(old.otherExpensesCent, 0),
         vatRate: getValidVatRate(old.vatRate, saved.vatRate ?? uiState.vatRate),
         creditPlacement: old.creditPlacement === "pretrial" || old.creditPlacement === "instance"
@@ -111,7 +111,7 @@
             feeValues: Object.fromEntries(POSITIONS.map((position) => [position, getValidSavedCent(old.feeValues?.[position], uiState.feeValues[instance][side][position])])),
             procedureFactor: configuration.instances[instance - 1].procedureFee,
                 hearingFactor: Number.isFinite(Number(old.hearingFactor)) ? Number(old.hearingFactor) : uiState.hearingFactors[instance][side],
-            settlementFactor: Number.isFinite(Number(old.settlementFactor)) ? Number(old.settlementFactor) : (instance === 1 ? 1.0 : 1.3),
+            settlementFactor: instance === 1 ? 1.0 : 1.3,
             otherExpensesCent: getValidSavedCent(old.otherExpensesCent, uiState.otherExpenses[instance][side]),
             vatRate: getValidVatRate(old.vatRate, saved.vatRate ?? uiState.vatRate)
           };
@@ -585,7 +585,7 @@
   function pretrialSettlementRow(group) {
     const parameter = uiState.groupParameters.pretrial[group.groupId];
     const enabled = Boolean(parameter.settlementEnabled);
-    return `<tr><th scope="row"><label><input type="checkbox" data-pretrial-settlement-enabled="${group.groupId}" ${enabled ? "checked" : ""}> Einigungsgebühr</label></th><td><input class="fee-value-input" type="text" inputmode="decimal" data-pretrial-value="${group.groupId}:settlementValueCent" value="${formatCent(parameter.settlementValueCent)}" aria-label="Gegenstandswert Einigungsgebühr Vertretungsgruppe ${group.groupId}" ${enabled ? "" : "disabled"}></td><td>${factorInput(`pretrial:0:claimant:${group.groupId}:settlementFactor`, parameter.settlementFactor, `Faktor Einigungsgebühr Vertretungsgruppe ${group.groupId}`, !enabled)}</td><td>${formatCent(group.settlementCent)}</td></tr>`;
+    return `<tr><th scope="row"><label><input type="checkbox" data-pretrial-settlement-enabled="${group.groupId}" ${enabled ? "checked" : ""}> Einigungsgebühr</label></th><td><input class="fee-value-input" type="text" inputmode="decimal" data-pretrial-value="${group.groupId}:settlementValueCent" value="${formatCent(parameter.settlementValueCent)}" aria-label="Gegenstandswert Einigungsgebühr Vertretungsgruppe ${group.groupId}" ${enabled ? "" : "disabled"}></td><td><output aria-label="Fest vorgegebener Faktor Einigungsgebühr Klägerseite vorgerichtlich Vertretungsgruppe ${group.groupId}">${formatFactor(parameter.settlementFactor)}</output></td><td>${formatCent(group.settlementCent)}</td></tr>`;
   }
 
 
@@ -609,8 +609,10 @@
       factorCell = `<select data-hearing-factor="${context.instance}:${context.side}:${context.groupId}" aria-label="Faktor Terminsgebühr ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"}">${hearingOptions(context.instance, parameter.hearingFactor)}</select>`;
     } else if (position === "procedure") {
       factorCell = `<output aria-label="Fest vorgegebener Faktor Verfahrensgebühr ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"} Vertretungsgruppe ${context.groupId}">${formatFactor(parameter.procedureFactor)}</output>`;
+    } else if (position === "settlement") {
+      factorCell = `<output aria-label="Fest vorgegebener Faktor Einigungsgebühr ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"} Vertretungsgruppe ${context.groupId}">${formatFactor(parameter.settlementFactor)}</output>`;
     } else {
-      const factorField = position === "increase" ? "increaseFactor" : "settlementFactor";
+      const factorField = "increaseFactor";
       factorCell = factorInput(`instance:${context.instance}:${context.side}:${context.groupId}:${factorField}`, parameter[factorField], `Faktor ${label} Vertretungsgruppe ${context.groupId}`);
     }
     return `<tr><th scope="row">${escapeHtml(label)}</th><td><input class="fee-value-input" type="text" inputmode="decimal" data-fee-value="${key}" value="${formatCent(value)}" aria-label="Gegenstandswert ${escapeHtml(label)} ${roman(context.instance)}. Instanz ${context.side === "claimant" ? "Klägerseite" : "Beklagtenseite"}"></td><td>${factorCell}</td><td>${formatCent(amountCent || 0)}</td></tr>`;
