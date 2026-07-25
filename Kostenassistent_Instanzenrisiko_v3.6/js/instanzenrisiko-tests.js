@@ -222,6 +222,15 @@
 
     const sourceResponse = await fetch("js/instanzenrisiko-ausgabe.js", { cache: "no-store" });
     const sourceText = await sourceResponse.text();
+    const startPageSourceResponse = await fetch("js/instanzenrisiko-ui.js", { cache: "no-store" });
+    const startPageSourceText = await startPageSourceResponse.text();
+    assert(startPageSourceText.includes('saveCurrentDraft({ silent: true, overwriteAllFeeValues: true })'), "Nur der Berechnen-Button muss die vollständige Gegenstandswertüberschreibung auslösen.");
+    assert(startPageSourceText.includes("function overwriteAllFeeValues(previousOutput, valueCent)"), "Die vollständige Gegenstandswertüberschreibung muss zentral umgesetzt sein.");
+    assert(!startPageSourceText.includes("previousValueCent !== nextValueCent"), "Eine bloße Streitwertänderung darf beim Autospeichern keine Gegenstandswerte überschreiben.");
+    ["businessValueCent", "increaseValueCent", "creditValueCent", "settlementValueCent"].forEach((field) => {
+      assert(startPageSourceText.includes(`group.${field} = valueCent`), `Der vorgerichtliche Wert ${field} muss beim Berechnen überschrieben werden.`);
+    });
+    assert(startPageSourceText.includes('const positions = ["procedure", "increase", "hearing", "settlement"]'), "Alle gerichtlichen Gebührenpositionen müssen beim Berechnen überschrieben werden.");
     assert(!/factorInput\([^;\n]*procedureFactor/.test(sourceText), "Der Verfahrensgebührenfaktor darf kein editierbares Faktor-Feld besitzen.");
     assert(sourceText.includes("Fest vorgegebener Faktor Verfahrensgebühr"), "Der Verfahrensgebührenfaktor muss als fest vorgegebene Ausgabe angezeigt werden.");
     assert(sourceText.includes("procedureFactor: configuration.instances[instance - 1].procedureFee"), "Gespeicherte Fälle müssen auf die instanzabhängigen Standardfaktoren normalisiert werden.");

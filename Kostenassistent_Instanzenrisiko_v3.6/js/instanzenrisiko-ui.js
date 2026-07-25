@@ -505,7 +505,7 @@
     }
     elements.formularFehler.hidden = true;
     hasUnsavedChanges = true;
-    const saved = saveCurrentDraft({ silent: true });
+    const saved = saveCurrentDraft({ silent: true, overwriteAllFeeValues: true });
     if (!saved) {
       showStatus("Die Eingaben konnten nicht gespeichert werden.");
       return;
@@ -582,19 +582,9 @@
     clearTimeout(autosaveTimer);
     const nextData = getData();
     const previousModule = global.KostenassistentStorage.loadCaseModule(activeCaseId, MODULE_NAME);
-    const previousValueCent = previousModule?.data?.streitwert?.gesamtCent;
     const nextValueCent = nextData.streitwert?.gesamtCent || 0;
     let nextOutput = previousModule?.ausgabe;
-    if (nextOutput && Number.isInteger(previousValueCent) && previousValueCent !== nextValueCent) {
-      const feeValues = {};
-      [1, 2, 3].forEach((instance) => {
-        feeValues[instance] = {};
-        ["claimant", "defendant"].forEach((side) => {
-          feeValues[instance][side] = { procedure: nextValueCent, increase: nextValueCent, hearing: nextValueCent, settlement: nextValueCent };
-        });
-      });
-      nextOutput = { ...nextOutput, creditValueCent: nextValueCent, feeValues };
-    }
+    if (options.overwriteAllFeeValues) nextOutput = overwriteAllFeeValues(nextOutput, nextValueCent);
     const saved = global.KostenassistentStorage.updateCaseModule(activeCaseId, MODULE_NAME, {
       ...(previousModule || {}),
       version: 1,
@@ -607,6 +597,40 @@
       if (!options.silent) showStatus("Eingaben automatisch gespeichert.");
     }
     return saved;
+  }
+
+  function overwriteAllFeeValues(previousOutput, valueCent) {
+    const nextOutput = structuredCloneSafe(previousOutput || {});
+    const positions = ["procedure", "increase", "hearing", "settlement"];
+    nextOutput.creditValueCent = valueCent;
+    nextOutput.feeValues = {};
+    [1, 2, 3].forEach((instance) => {
+      nextOutput.feeValues[instance] = {};
+      ["claimant", "defendant"].forEach((side) => {
+        nextOutput.feeValues[instance][side] = Object.fromEntries(positions.map((position) => [position, valueCent]));
+      });
+    });
+
+    const groupParameters = nextOutput.groupParameters || {};
+    groupParameters.pretrial = groupParameters.pretrial || {};
+    Object.values(groupParameters.pretrial).forEach((group) => {
+      group.businessValueCent = valueCent;
+      group.increaseValueCent = valueCent;
+      group.creditValueCent = valueCent;
+      group.settlementValueCent = valueCent;
+    });
+    groupParameters.instances = groupParameters.instances || {};
+    [1, 2, 3].forEach((instance) => {
+      groupParameters.instances[instance] = groupParameters.instances[instance] || {};
+      ["claimant", "defendant"].forEach((side) => {
+        groupParameters.instances[instance][side] = groupParameters.instances[instance][side] || {};
+        Object.values(groupParameters.instances[instance][side]).forEach((group) => {
+          group.feeValues = Object.fromEntries(positions.map((position) => [position, valueCent]));
+        });
+      });
+    });
+    nextOutput.groupParameters = groupParameters;
+    return nextOutput;
   }
 
   function restoreSavedDraft() {
