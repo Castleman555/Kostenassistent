@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instanzenrisiko – Kostenassistent</title>
+  <link rel="stylesheet" href="Richterassistent.css">
+  <script src="js/form-utils.js" defer></script>
+  <script src="js/storage.js" defer></script>
+  <script src="js/instanzenrisiko-ui.js" defer></script>
+</head>
+<body>
+  <div class="page-layout">
+    <aside class="sidebar" aria-label="Strukturbaum">
+      <h2 class="tree-title">Home</h2>
+      <ul class="tree">
+        <li class="root"><a href="Richterassistent_Startseite.html">Kostenassistent</a></li>
+        <li class="child"><a href="Instanzenrisiko_Startseite.html" aria-current="page">Instanzenrisiko</a></li>
+        <li class="child"><a href="Vergleichskosten_Startseite.html">Vergleichskosten</a></li>
+        <li class="child"><a href="Mehrkosten_und_Quotenmethode_Startseite.html">Mehrkosten- und Quotenmethode</a></li>
+        <li class="child"><a href="Baumbachsche_Formel_Startseite.html">Baumbachsche Formel</a></li>
+      </ul>
+    </aside>
+
+    <div class="main-column">
+      <header class="top-area compact-top-area">
+        <div class="content">
+          <h1>Instanzenrisiko</h1>
+          <p class="version">Version 1.0 · Design: Richterassistent 1.0</p>
+          <p class="page-intro">Grunddaten zur späteren Berechnung des Prozesskostenrisikos erfassen.</p>
+        </div>
+      </header>
+
+      <main class="future-area">
+        <div class="content">
+          <div id="autosaveStatus" class="autosave-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+
+          <form id="instanzenrisikoForm" class="form-card" novalidate>
+            <section class="form-section" aria-labelledby="streitwertHeading">
+              <div class="section-heading-row">
+                <div>
+                  <h2 id="streitwertHeading">Streitwert</h2>
+                  <p class="section-hint">Gesamtstreitwert direkt eingeben oder in Teilstreitwerte aufgliedern.</p>
+                </div>
+              </div>
+
+              <div class="money-control-row">
+                <label for="gesamtstreitwert" class="field-label">Streitwert (gesamt)</label>
+                <div class="money-control">
+                  <input
+                    id="gesamtstreitwert"
+                    name="gesamtstreitwert"
+                    class="money-input"
+                    type="text"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    value="0,00 €"
+                    aria-describedby="gesamtstreitwertFehler"
+                  >
+                  <button id="gesamtstreitwertLeeren" class="icon-button" type="button" aria-label="Gesamtstreitwert leeren" title="Gesamtstreitwert leeren">×</button>
+                  <button id="teilstreitwertHinzufuegen" class="icon-button primary-icon-button" type="button" aria-label="Teilstreitwert hinzufügen" title="Teilstreitwert hinzufügen">+</button>
+                </div>
+                <p id="gesamtstreitwertFehler" class="field-error" role="alert" hidden></p>
+              </div>
+
+              <div id="teilstreitwerteBereich" class="subsection" hidden>
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <caption class="visually-hidden">Teilstreitwerte</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" class="number-column">Nr.</th>
+                        <th scope="col">Bezeichnung</th>
+                        <th scope="col">Betrag</th>
+                        <th scope="col" class="action-column">Aktion</th>
+                      </tr>
+                    </thead>
+                    <tbody id="teilstreitwerteTabelle"></tbody>
+                  </table>
+                </div>
+                <div class="subsection-actions">
+                  <button id="weiterePosition" class="secondary-button" type="button">+ Weitere Position</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="personenHeading">
+              <h2 id="personenHeading">Anzahl der Personen auf Kläger- und Beklagtenseite</h2>
+
+              <div class="party-count-grid">
+                <div class="compact-field">
+                  <label for="anzahlKlaeger">Klägerseite</label>
+                  <input id="anzahlKlaeger" name="anzahlKlaeger" class="two-digit-input" type="number" min="1" max="99" step="1" value="1" inputmode="numeric">
+                </div>
+                <div class="compact-field">
+                  <label for="anzahlBeklagte">Beklagtenseite</label>
+                  <input id="anzahlBeklagte" name="anzahlBeklagte" class="two-digit-input" type="number" min="1" max="99" step="1" value="1" inputmode="numeric">
+                </div>
+              </div>
+
+              <div class="party-details-grid">
+                <section id="klaegerVertretung" class="party-panel" aria-labelledby="klaegerVertretungHeading" hidden>
+                  <h3 id="klaegerVertretungHeading">Vertretung auf Klägerseite</h3>
+                  <div id="klaegerVertretungInhalt"></div>
+                </section>
+
+                <section id="beklagteVertretung" class="party-panel" aria-labelledby="beklagteVertretungHeading" hidden>
+                  <h3 id="beklagteVertretungHeading">Vertretung auf Beklagtenseite</h3>
+                  <div id="beklagteVertretungInhalt"></div>
+                </section>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="vorgerichtlichHeading">
+              <h2 id="vorgerichtlichHeading">Vorgerichtliche Tätigkeit</h2>
+              <div class="select-field">
+                <label for="vorgerichtlicheTaetigkeitKlaeger">Vorgerichtliche Tätigkeit auf Klägerseite?</label>
+                <select id="vorgerichtlicheTaetigkeitKlaeger" name="vorgerichtlicheTaetigkeitKlaeger">
+                  <option value="false" selected>Nein</option>
+                  <option value="true">Ja</option>
+                </select>
+              </div>
+            </section>
+
+            <div id="formularFehler" class="error-summary" role="alert" tabindex="-1" hidden></div>
+
+            <div class="form-actions">
+              <button id="formularZuruecksetzen" class="secondary-button" type="button">Zurücksetzen</button>
+              <button id="datenPruefen" class="secondary-button" type="button">Eingaben prüfen</button>
+              <button id="instanzenrisikoBerechnen" class="nav-button form-submit-button" type="button">Instanzenrisiko berechnen</button>
+            </div>
+          </form>
+
+          <section id="datenVorschauBereich" class="form-card preview-card" aria-labelledby="datenVorschauHeading" hidden>
+            <h2 id="datenVorschauHeading">Datenvorschau</h2>
+            <pre id="datenVorschau" class="data-preview"></pre>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <datalist id="teilstreitwertBezeichnungen">
+    <option value="Klageantrag Ziff. 1"></option>
+    <option value="Widerklage"></option>
+    <option value="Hilfsaufrechnung"></option>
+  </datalist>
+</body>
+</html>

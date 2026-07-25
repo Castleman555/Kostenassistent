@@ -1,0 +1,3 @@
+1. Eingabeaufforderung oder PowerShell im Projektordner öffnen.
+2. Befehl ausführen: python -m http.server 8000
+3. Im Browser öffnen: http://localhost:8000/Instanzenrisiko_Startseite.html

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instanzenrisiko – Berechnung</title>
+  <link rel="stylesheet" href="Richterassistent.css">
+  <script src="js/form-utils.js" defer></script>
+  <script src="js/storage.js" defer></script>
+  <script src="js/gebuehrentabellen-service.js" defer></script>
+  <script src="js/instanzenrisiko-berechnung.js" defer></script>
+  <script src="js/instanzenrisiko-ausgabe.js" defer></script>
+</head>
+<body class="instanzenrisiko-ausgabe-page">
+  <div class="page-layout">
+    <aside class="sidebar" aria-label="Strukturbaum">
+      <h2 class="tree-title">Home</h2>
+      <ul class="tree">
+        <li class="root"><a href="Richterassistent_Startseite.html">Kostenassistent</a></li>
+        <li class="child"><a href="Instanzenrisiko_Startseite.html" aria-current="page">Instanzenrisiko</a></li>
+        <li class="child"><a href="Vergleichskosten_Startseite.html">Vergleichskosten</a></li>
+        <li class="child"><a href="Mehrkosten_und_Quotenmethode_Startseite.html">Mehrkosten- und Quotenmethode</a></li>
+        <li class="child"><a href="Baumbachsche_Formel_Startseite.html">Baumbachsche Formel</a></li>
+      </ul>
+    </aside>
+    <div class="main-column">
+      <header class="top-area compact-top-area"><div class="content">
+        <h1>Instanzenrisiko</h1><p class="version">Berechnung und Gesamtrisiko · Version 3.5</p>
+        <div class="header-actions"><a class="secondary-button link-button" href="Instanzenrisiko_Startseite.html">Eingaben bearbeiten</a></div>
+      </div></header>
+      <main class="future-area"><div class="content">
+        <div id="ausgabeFehler" class="error-summary" role="alert" tabindex="-1" hidden></div>
+        <section id="berechnungsBereich" hidden>
+          <section class="form-card" aria-labelledby="parameterHeading">
+            <h2 id="parameterHeading">Berechnungsparameter</h2>
+            <div class="parameter-grid parameter-grid-three">
+              <div class="compact-field"><label for="rechtsstand">Rechtsstand</label><select id="rechtsstand"><option value="2025-06-01">01.06.2025</option><option value="2021-01-01">01.01.2021</option><option value="2013-08-01">01.08.2013</option><option value="2004-07-01">01.07.2004</option></select></div>
+              <div class="compact-field"><label for="streitwertAusgabe">Gerichtlicher Streitwert</label><input id="streitwertAusgabe" type="text" inputmode="decimal"></div>
+              <div class="compact-field termination-field"><label for="beendigungsInstanz">Verfahren vollständig beendet in:</label><div class="termination-row"><select id="beendigungsInstanz"><option value="">– keine Auswahl –</option><option value="1">I. Instanz</option><option value="2">II. Instanz</option><option value="3">III. Instanz</option></select><span>durch</span><select id="beendigungsArt" disabled><option value="">– keine Auswahl –</option></select></div></div>
+            </div>
+          </section>
+
+          <section class="summary-grid" aria-labelledby="gesamtHeading">
+            <h2 id="gesamtHeading" class="visually-hidden">Zusammenfassung</h2>
+            <article class="summary-card"><span>Vorgerichtlich</span><strong id="summeVorgerichtlich">0,00 €</strong></article>
+            <article class="summary-card"><span>I. Instanz</span><strong id="summeInstanz1">0,00 €</strong></article>
+            <article class="summary-card"><span>II. Instanz</span><strong id="summeInstanz2">0,00 €</strong></article>
+            <article class="summary-card"><span>III. Instanz</span><strong id="summeInstanz3">0,00 €</strong></article>
+            <article class="summary-card summary-card-total"><span>Gesamtrisiko</span><strong id="summeGesamt" aria-live="polite">0,00 €</strong></article>
+          </section>
+
+          <div id="warnungen" class="notice-card" role="status" aria-live="polite" hidden></div>
+          <div id="ausgabeStatus" class="status-message" role="status" aria-live="polite" hidden></div>
+          <datalist id="vat-rate-options"><option value="0"></option><option value="7"></option><option value="16"></option><option value="19"></option></datalist>
+          <section id="vorgerichtlichBereich" class="form-card" hidden></section>
+          <section id="instanzenContainer"></section>
+          <section class="form-card metadata-card"><h2>Berechnungsgrundlagen</h2><dl id="metadaten"></dl></section>
+        </section>
+      </div></main>
+    </div>
+  </div>
+</body>
+</html>
