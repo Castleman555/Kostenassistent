@@ -224,13 +224,14 @@
     const sourceText = await sourceResponse.text();
     const startPageSourceResponse = await fetch("js/instanzenrisiko-ui.js", { cache: "no-store" });
     const startPageSourceText = await startPageSourceResponse.text();
-    assert(startPageSourceText.includes('saveCurrentDraft({ silent: true, overwriteAllFeeValues: true })'), "Nur der Berechnen-Button muss die vollständige Gegenstandswertüberschreibung auslösen.");
-    assert(startPageSourceText.includes("function overwriteAllFeeValues(previousOutput, valueCent)"), "Die vollständige Gegenstandswertüberschreibung muss zentral umgesetzt sein.");
+    assert(startPageSourceText.includes('saveCurrentDraft({ silent: true, resetOutputToDefaults: true })'), "Nur der Berechnen-Button muss die vollständige Rücksetzung der Ausgabewerte auslösen.");
+    assert(startPageSourceText.includes("function createInitialOutputState(data, valueCent)"), "Die vollständige Rücksetzung auf Ausgangswerte muss zentral umgesetzt sein.");
     assert(!startPageSourceText.includes("previousValueCent !== nextValueCent"), "Eine bloße Streitwertänderung darf beim Autospeichern keine Gegenstandswerte überschreiben.");
-    ["businessValueCent", "increaseValueCent", "creditValueCent", "settlementValueCent"].forEach((field) => {
-      assert(startPageSourceText.includes(`group.${field} = valueCent`), `Der vorgerichtliche Wert ${field} muss beim Berechnen überschrieben werden.`);
-    });
     assert(startPageSourceText.includes('const positions = ["procedure", "increase", "hearing", "settlement"]'), "Alle gerichtlichen Gebührenpositionen müssen beim Berechnen überschrieben werden.");
+    assert(startPageSourceText.includes('termination: { instance: 0, type: "" }'), "Die Verfahrensbeendigung muss beim Berechnen zurückgesetzt werden.");
+    assert(startPageSourceText.includes("pretrialEffectiveDate: null"), "Der individuelle vorgerichtliche Rechtsstand muss beim Berechnen zurückgesetzt werden.");
+    assert(startPageSourceText.includes("businessFactor: 1.3"), "Der vorgerichtliche Geschäftsgebührenfaktor muss auf den Ausgangswert zurückgesetzt werden.");
+    assert(startPageSourceText.includes("groupParameters: {"), "Individuelle gruppenspezifische Ausgabewerte dürfen beim Berechnen nicht übernommen werden.");
     assert(!/factorInput\([^;\n]*procedureFactor/.test(sourceText), "Der Verfahrensgebührenfaktor darf kein editierbares Faktor-Feld besitzen.");
     assert(sourceText.includes("Fest vorgegebener Faktor Verfahrensgebühr"), "Der Verfahrensgebührenfaktor muss als fest vorgegebene Ausgabe angezeigt werden.");
     assert(sourceText.includes("procedureFactor: configuration.instances[instance - 1].procedureFee"), "Gespeicherte Fälle müssen auf die instanzabhängigen Standardfaktoren normalisiert werden.");

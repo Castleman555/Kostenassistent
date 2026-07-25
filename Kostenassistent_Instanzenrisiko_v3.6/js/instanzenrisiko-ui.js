@@ -505,7 +505,7 @@
     }
     elements.formularFehler.hidden = true;
     hasUnsavedChanges = true;
-    const saved = saveCurrentDraft({ silent: true, overwriteAllFeeValues: true });
+    const saved = saveCurrentDraft({ silent: true, resetOutputToDefaults: true });
     if (!saved) {
       showStatus("Die Eingaben konnten nicht gespeichert werden.");
       return;
@@ -584,7 +584,7 @@
     const previousModule = global.KostenassistentStorage.loadCaseModule(activeCaseId, MODULE_NAME);
     const nextValueCent = nextData.streitwert?.gesamtCent || 0;
     let nextOutput = previousModule?.ausgabe;
-    if (options.overwriteAllFeeValues) nextOutput = overwriteAllFeeValues(nextOutput, nextValueCent);
+    if (options.resetOutputToDefaults) nextOutput = createInitialOutputState(nextData, nextValueCent);
     const saved = global.KostenassistentStorage.updateCaseModule(activeCaseId, MODULE_NAME, {
       ...(previousModule || {}),
       version: 1,
@@ -599,38 +599,44 @@
     return saved;
   }
 
-  function overwriteAllFeeValues(previousOutput, valueCent) {
-    const nextOutput = structuredCloneSafe(previousOutput || {});
+  function createInitialOutputState(data, valueCent) {
     const positions = ["procedure", "increase", "hearing", "settlement"];
-    nextOutput.creditValueCent = valueCent;
-    nextOutput.feeValues = {};
+    const feeValues = {};
     [1, 2, 3].forEach((instance) => {
-      nextOutput.feeValues[instance] = {};
+      feeValues[instance] = {};
       ["claimant", "defendant"].forEach((side) => {
-        nextOutput.feeValues[instance][side] = Object.fromEntries(positions.map((position) => [position, valueCent]));
+        feeValues[instance][side] = Object.fromEntries(positions.map((position) => [position, valueCent]));
       });
     });
-
-    const groupParameters = nextOutput.groupParameters || {};
-    groupParameters.pretrial = groupParameters.pretrial || {};
-    Object.values(groupParameters.pretrial).forEach((group) => {
-      group.businessValueCent = valueCent;
-      group.increaseValueCent = valueCent;
-      group.creditValueCent = valueCent;
-      group.settlementValueCent = valueCent;
-    });
-    groupParameters.instances = groupParameters.instances || {};
-    [1, 2, 3].forEach((instance) => {
-      groupParameters.instances[instance] = groupParameters.instances[instance] || {};
-      ["claimant", "defendant"].forEach((side) => {
-        groupParameters.instances[instance][side] = groupParameters.instances[instance][side] || {};
-        Object.values(groupParameters.instances[instance][side]).forEach((group) => {
-          group.feeValues = Object.fromEntries(positions.map((position) => [position, valueCent]));
-        });
-      });
-    });
-    nextOutput.groupParameters = groupParameters;
-    return nextOutput;
+    const pretrialEnabled = Boolean(data.vorgerichtlicheTaetigkeitKlaeger);
+    return {
+      effectiveDate: data.rechtsstand || "2025-06-01",
+      termination: { instance: 0, type: "" },
+      pretrialEnabled,
+      creditPlacement: pretrialEnabled ? "instance" : "none",
+      creditValueCent: valueCent,
+      feeValues,
+      hearingFactors: {
+        1: { claimant: 1.2, defendant: 1.2 },
+        2: { claimant: 1.2, defendant: 1.2 },
+        3: { claimant: 1.5, defendant: 1.5 }
+      },
+      businessFactor: 1.3,
+      pretrialEffectiveDate: null,
+      otherExpenses: {
+        1: { claimant: 0, defendant: 0 },
+        2: { claimant: 0, defendant: 0 },
+        3: { claimant: 0, defendant: 0 }
+      },
+      groupParameters: {
+        pretrial: {},
+        instances: {
+          1: { claimant: {}, defendant: {} },
+          2: { claimant: {}, defendant: {} },
+          3: { claimant: {}, defendant: {} }
+        }
+      }
+    };
   }
 
   function restoreSavedDraft() {
