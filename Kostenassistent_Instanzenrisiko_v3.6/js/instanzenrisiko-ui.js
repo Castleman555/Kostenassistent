@@ -621,6 +621,7 @@
         2: { claimant: 1.2, defendant: 1.2 },
         3: { claimant: 1.5, defendant: 1.5 }
       },
+      courtFactors: { 1: 3, 2: 4, 3: 5 },
       businessFactor: 1.3,
       pretrialEffectiveDate: null,
       otherExpenses: {

@@ -25,6 +25,16 @@
     });
 
     const normal = global.InstanzenrisikoBerechnung.calculate(makeInput(), tables);
+    const allowedCourtFactors = { 1: [1, 3], 2: [1, 2, 3, 4], 3: [1, 3, 5] };
+    Object.entries(allowedCourtFactors).forEach(([instance, factors]) => {
+      factors.forEach((factor) => {
+        const courtFactors = { 1: 3, 2: 4, 3: 5, [instance]: factor };
+        const result = global.InstanzenrisikoBerechnung.calculate(makeInput({ courtFactors }), tables);
+        const courtCosts = result.instances[Number(instance) - 1].courtCosts;
+        assert(courtCosts.factor === factor, `Gerichtsgebührenfaktor ${factor} muss in Instanz ${instance} verwendet werden.`);
+        assert(courtCosts.amountCent === courtCosts.baseFeeCent * factor, `Gerichtsgebühren mit Faktor ${factor} müssen in Instanz ${instance} korrekt berechnet werden.`);
+      });
+    });
     [1.3, 1.6, 2.3].forEach((expectedFactor, index) => {
       assert(normal.instances[index].claimantAttorneyCosts.groups[0].procedureFactor === expectedFactor, `Standardfaktor Verfahrensgebühr Instanz ${index + 1} Klägerseite muss ${expectedFactor} sein.`);
       assert(normal.instances[index].defendantAttorneyCosts.groups[0].procedureFactor === expectedFactor, `Standardfaktor Verfahrensgebühr Instanz ${index + 1} Beklagtenseite muss ${expectedFactor} sein.`);
@@ -246,6 +256,12 @@
     assert(sourceText.includes('target.matches("[data-instance-settlement-enabled]")'), "Gerichtliche Vergleichskontrollkästchen müssen die Beendigungsparameter steuern.");
     assert(sourceText.includes('elements.terminationType.value = "comparison"'), "Ein gerichtliches Vergleichskontrollkästchen muss die Beendigungsart Vergleich setzen.");
     assert(sourceText.includes("pretrialSettlementEndsProceedings"), "Die aktivierte vorgerichtliche Einigungsgebühr muss die Instanzberechnung und -darstellung beenden.");
+    assert(sourceText.includes("const COURT_FACTOR_OPTIONS = Object.freeze({ 1: [1, 3], 2: [1, 2, 3, 4], 3: [1, 3, 5] })"), "Die zulässigen Gerichtsgebührenfaktoren müssen instanzspezifisch festgelegt sein.");
+    assert(sourceText.includes('data-court-factor="${n}"'), "Jede dargestellte Instanz muss ein Dropdown für den Gerichtsgebührenfaktor besitzen.");
+    assert(sourceText.includes("courtFactors: uiState.courtFactors"), "Manuell gewählte Gerichtsgebührenfaktoren müssen der Berechnung übergeben werden.");
+    assert(sourceText.includes("courtFactors: uiState.courtFactors, businessFactor"), "Gerichtsgebührenfaktoren müssen im Ausgabestatus gespeichert werden.");
+    assert(sourceText.includes("automaticCourtFactor(instance, uiState.termination)"), "Das Zurücksetzen einer Instanz muss den aktuell maßgeblichen Ausgangsfaktor wiederherstellen.");
+    assert(startPageSourceText.includes("courtFactors: { 1: 3, 2: 4, 3: 5 }"), "Eine neue Berechnung muss die Gerichtsgebührenfaktoren 3, 4 und 5 wiederherstellen.");
     assert(!/data-group-factor=[^>]*increaseFactor/.test(sourceText), "Der Erhöhungsfaktor Nr. 1008 VV RVG darf kein editierbares Faktor-Feld besitzen.");
     assert(sourceText.includes("<output aria-label=\"Automatisch ermittelter Faktor Erhöhung"), "Der automatisch ermittelte Erhöhungsfaktor muss als Ausgabe angezeigt werden.");
     assert(sourceText.includes("data-vat-rate=\"${key}\""), "Die Umsatzsteuerzeile muss je Kostenbereich ein editierbares Feld besitzen.");

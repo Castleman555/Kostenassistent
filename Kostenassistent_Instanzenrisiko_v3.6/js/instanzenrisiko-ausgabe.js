@@ -2,6 +2,7 @@
   "use strict";
   const MODULE_NAME = "instanzenrisiko";
   const POSITIONS = ["procedure", "increase", "hearing", "settlement"];
+  const COURT_FACTOR_OPTIONS = Object.freeze({ 1: [1, 3], 2: [1, 2, 3, 4], 3: [1, 3, 5] });
   const { formatCent, parseGermanMoneyToCent } = global.FormUtils;
   const configuration = structuredClone(global.InstanzenrisikoBerechnung.DEFAULT_CONFIGURATION);
   let feeTables, storedData, activeCase, storedModule, elements;
@@ -9,7 +10,7 @@
   const uiState = {
     effectiveDate: "2025-06-01", valueCent: 0, vatRate: 0.19,
     termination: { instance: 0, type: "" }, pretrialEnabled: false,
-    creditPlacement: "none", creditValueCent: 0, businessFactor: 1.3, pretrialEffectiveDate: null, feeValues: {}, hearingFactors: {}, otherExpenses: {}, groupParameters: { pretrial: {}, instances: {} }
+    creditPlacement: "none", creditValueCent: 0, businessFactor: 1.3, pretrialEffectiveDate: null, feeValues: {}, hearingFactors: {}, courtFactors: { 1: 3, 2: 4, 3: 5 }, otherExpenses: {}, groupParameters: { pretrial: {}, instances: {} }
   };
 
   document.addEventListener("DOMContentLoaded", init);
@@ -159,6 +160,7 @@
   }
 
   function resetInstanceValues(instance) {
+    uiState.courtFactors[instance] = automaticCourtFactor(instance, uiState.termination);
     ["claimant", "defendant"].forEach((side) => {
       POSITIONS.forEach((position) => { uiState.feeValues[instance][side][position] = uiState.valueCent; });
       uiState.hearingFactors[instance][side] = instance === 3 ? 1.5 : 1.2;
@@ -195,6 +197,11 @@
     uiState.creditPlacement = uiState.pretrialEnabled ? (saved.creditPlacement === "pretrial" ? "pretrial" : "instance") : "none";
     uiState.creditValueCent = getValidSavedCent(saved.creditValueCent, uiState.valueCent);
     uiState.termination = saved.termination || { instance: 0, type: "" };
+    const automaticFactors = automaticCourtFactors(uiState.termination);
+    uiState.courtFactors = Object.fromEntries([1, 2, 3].map((instance) => {
+      const savedFactor = Number(saved.courtFactors?.[instance]);
+      return [instance, COURT_FACTOR_OPTIONS[instance].includes(savedFactor) ? savedFactor : automaticFactors[instance]];
+    }));
     uiState.feeValues = makeDefaultFeeValues(uiState.valueCent);
     [1, 2, 3].forEach((n) => {
       ["claimant", "defendant"].forEach((side) => {
@@ -237,8 +244,17 @@
       elements.streitwert.blur();
     });
     elements.streitwert.addEventListener("blur", commitCourtValue);
-    elements.terminationInstance.addEventListener("change", () => { updateTerminationOptions(true); recalculateAndRender(); });
-    elements.terminationType.addEventListener("change", recalculateAndRender);
+    elements.terminationInstance.addEventListener("change", () => {
+      const previous = uiState.termination;
+      updateTerminationOptions(true);
+      applyTerminationCourtFactor(previous, { instance: Number(elements.terminationInstance.value || 0), type: "" });
+      recalculateAndRender();
+    });
+    elements.terminationType.addEventListener("change", () => {
+      const previous = uiState.termination;
+      applyTerminationCourtFactor(previous, { instance: Number(elements.terminationInstance.value || 0), type: elements.terminationType.value });
+      recalculateAndRender();
+    });
     elements.pretrial.addEventListener("change", handleDynamicChange);
     elements.pretrial.addEventListener("keydown", handleDynamicKeydown);
     elements.pretrial.addEventListener("blur", handleDynamicBlur, true);
@@ -278,16 +294,23 @@
       uiState.groupParameters.pretrial[groupId].settlementEnabled = target.checked;
     } else if (target.matches("[data-instance-settlement-enabled]")) {
       const instance = Number(target.dataset.instanceSettlementEnabled);
+      const previous = uiState.termination;
       if (target.checked) {
         elements.terminationInstance.value = String(instance);
         uiState.termination = { instance, type: "comparison" };
         updateTerminationOptions(false);
         elements.terminationType.value = "comparison";
+        applyTerminationCourtFactor(previous, uiState.termination);
       } else if (Number(elements.terminationInstance.value) === instance && elements.terminationType.value === "comparison") {
         elements.terminationInstance.value = "";
         uiState.termination = { instance: 0, type: "" };
         updateTerminationOptions(false);
+        applyTerminationCourtFactor(previous, uiState.termination);
       }
+    } else if (target.matches("[data-court-factor]")) {
+      const instance = Number(target.dataset.courtFactor);
+      const factor = Number(target.value);
+      if (COURT_FACTOR_OPTIONS[instance]?.includes(factor)) uiState.courtFactors[instance] = factor;
     } else if (target.matches("[data-pretrial-effective-date]")) {
       uiState.pretrialEffectiveDate = target.value || null;
     } else if (target.matches("[data-hearing-factor]")) {
@@ -503,14 +526,10 @@
   function buildInput() {
     uiState.effectiveDate = elements.rechtsstand.value;
     uiState.termination = { instance: Number(elements.terminationInstance.value || 0), type: elements.terminationType.value };
-    const courtFactors = { 1: 3, 2: 4, 3: 5 };
-    if (uiState.termination.instance === 1 && uiState.termination.type) courtFactors[1] = 1;
-    if (uiState.termination.instance === 2 && uiState.termination.type === "comparison") courtFactors[2] = 2;
-    if (uiState.termination.instance === 3 && uiState.termination.type === "comparison") courtFactors[3] = 3;
     return {
       effectiveDate: uiState.effectiveDate, valueCent: uiState.valueCent, vatRate: uiState.vatRate,
       claimant: storedData.klaegerseite, defendant: storedData.beklagtenseite,
-      termination: uiState.termination, courtFactors, feeValues: uiState.feeValues, hearingFactors: uiState.hearingFactors,
+      termination: uiState.termination, courtFactors: uiState.courtFactors, feeValues: uiState.feeValues, hearingFactors: uiState.hearingFactors,
       otherExpenses: uiState.otherExpenses, groupParameters: uiState.groupParameters,
       pretrial: { enabled: uiState.pretrialEnabled, creditPlacement: uiState.creditPlacement, creditValueCent: uiState.creditValueCent, party: storedData.klaegerseite, valueCent: uiState.valueCent, businessFactor: uiState.businessFactor, effectiveDate: uiState.pretrialEffectiveDate || uiState.effectiveDate, otherExpensesCent: 0, vatRate: uiState.vatRate, groupParameters: uiState.groupParameters.pretrial }
     };
@@ -534,7 +553,7 @@
 
   function saveUiState() {
     if (!activeCase) return;
-    global.KostenassistentStorage.updateCaseModule(activeCase.fallId, MODULE_NAME, { ...storedModule, data: storedData, ausgabe: { effectiveDate: uiState.effectiveDate, termination: uiState.termination, pretrialEnabled: uiState.pretrialEnabled, creditPlacement: uiState.creditPlacement, creditValueCent: uiState.creditValueCent, feeValues: uiState.feeValues, hearingFactors: uiState.hearingFactors, businessFactor: uiState.businessFactor, pretrialEffectiveDate: uiState.pretrialEffectiveDate, otherExpenses: uiState.otherExpenses, groupParameters: serializeGroupParameters() } });
+    global.KostenassistentStorage.updateCaseModule(activeCase.fallId, MODULE_NAME, { ...storedModule, data: storedData, ausgabe: { effectiveDate: uiState.effectiveDate, termination: uiState.termination, pretrialEnabled: uiState.pretrialEnabled, creditPlacement: uiState.creditPlacement, creditValueCent: uiState.creditValueCent, feeValues: uiState.feeValues, hearingFactors: uiState.hearingFactors, courtFactors: uiState.courtFactors, businessFactor: uiState.businessFactor, pretrialEffectiveDate: uiState.pretrialEffectiveDate, otherExpenses: uiState.otherExpenses, groupParameters: serializeGroupParameters() } });
   }
 
   function renderResult(result) {
@@ -563,8 +582,29 @@
   function renderInstance(instance) {
     const section = document.createElement("section"); section.className = "form-card instance-card";
     const n = instance.number;
-    section.innerHTML = `<h2 class="instance-heading"><span>${roman(n)}. Instanz</span><button type="button" class="secondary-button compact-button" data-reset-instance="${n}">Werte zurücksetzen</button></h2><div class="result-two-column"><div>${renderAttorneyTable(instance.claimantAttorneyCosts, "Rechtsanwaltskosten Klägerseite", { instance: n, side: "claimant" })}</div><div>${renderAttorneyTable(instance.defendantAttorneyCosts, "Rechtsanwaltskosten Beklagtenseite", { instance: n, side: "defendant" })}</div></div><h3>Gerichtskosten</h3><div class="result-line"><span>Gerichtsgebühren (${formatFactor(instance.courtCosts.factor)})</span><strong>${formatCent(instance.courtCosts.amountCent)}</strong></div><div class="result-line result-total"><span>Gesamt ${roman(n)}. Instanz</span><strong>${formatCent(instance.subtotalCent)}</strong></div><div class="result-line"><span>Kumuliertes Risiko</span><strong>${formatCent(instance.cumulativeTotalCent)}</strong></div>`;
+    section.innerHTML = `<h2 class="instance-heading"><span>${roman(n)}. Instanz</span><button type="button" class="secondary-button compact-button" data-reset-instance="${n}">Werte zurücksetzen</button></h2><div class="result-two-column"><div>${renderAttorneyTable(instance.claimantAttorneyCosts, "Rechtsanwaltskosten Klägerseite", { instance: n, side: "claimant" })}</div><div>${renderAttorneyTable(instance.defendantAttorneyCosts, "Rechtsanwaltskosten Beklagtenseite", { instance: n, side: "defendant" })}</div></div><h3>Gerichtskosten</h3><div class="result-line"><label>Gerichtsgebühren <select class="court-factor-select" data-court-factor="${n}" aria-label="Faktor Gerichtsgebühren ${roman(n)}. Instanz">${courtFactorOptions(n)}</select></label><strong>${formatCent(instance.courtCosts.amountCent)}</strong></div><div class="result-line result-total"><span>Gesamt ${roman(n)}. Instanz</span><strong>${formatCent(instance.subtotalCent)}</strong></div><div class="result-line"><span>Kumuliertes Risiko</span><strong>${formatCent(instance.cumulativeTotalCent)}</strong></div>`;
     return section;
+  }
+
+  function automaticCourtFactors(termination) {
+    return { 1: automaticCourtFactor(1, termination), 2: automaticCourtFactor(2, termination), 3: automaticCourtFactor(3, termination) };
+  }
+
+  function automaticCourtFactor(instance, termination) {
+    if (termination?.instance === 1 && instance === 1 && termination.type) return 1;
+    if (termination?.instance === 2 && instance === 2 && termination.type === "comparison") return 2;
+    if (termination?.instance === 3 && instance === 3 && termination.type === "comparison") return 3;
+    return configuration.instances[instance - 1].courtFee;
+  }
+
+  function applyTerminationCourtFactor(previous, next) {
+    if (previous?.instance) uiState.courtFactors[previous.instance] = configuration.instances[previous.instance - 1].courtFee;
+    if (next.instance) uiState.courtFactors[next.instance] = automaticCourtFactor(next.instance, next);
+    uiState.termination = next;
+  }
+
+  function courtFactorOptions(instance) {
+    return COURT_FACTOR_OPTIONS[instance].map((factor) => `<option value="${factor}"${uiState.courtFactors[instance] === factor ? " selected" : ""}>${factor}</option>`).join("");
   }
 
   function renderAttorneyTable(costs, title, context = {}) {
