@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Instanzenrisiko – Berechnung</title>
   <link rel="stylesheet" href="Richterassistent.css">
+  <script src="js/instanzenrisiko-beschriftungen.js" defer></script>
   <script src="js/form-utils.js" defer></script>
   <script src="js/storage.js" defer></script>
   <script src="js/gebuehrentabellen-service.js" defer></script>
@@ -25,27 +26,27 @@
     </aside>
     <div class="main-column">
       <header class="top-area compact-top-area"><div class="content">
-        <h1>Instanzenrisiko</h1><p class="version">Berechnung und Gesamtrisiko · Version 3.5</p>
-        <div class="header-actions"><a class="secondary-button link-button" href="Instanzenrisiko_Startseite.html">Eingaben bearbeiten</a></div>
+        <h1 data-label-key="output.title">Instanzenrisiko</h1><p class="version" data-label-key="output.version">Berechnung und Gesamtrisiko · Version 3.5</p>
+        <div class="header-actions"><a class="secondary-button link-button" href="Instanzenrisiko_Startseite.html" data-label-key="output.bearbeiten">Eingaben bearbeiten</a></div>
       </div></header>
       <main class="future-area"><div class="content">
         <div id="ausgabeFehler" class="error-summary" role="alert" tabindex="-1" hidden></div>
         <section id="berechnungsBereich" hidden>
           <section class="form-card" aria-labelledby="parameterHeading">
-            <h2 id="parameterHeading">Berechnungsparameter</h2>
+            <h2 id="parameterHeading" data-label-key="output.parameter">Berechnungsparameter</h2>
             <div class="parameter-grid parameter-grid-two">
-              <div class="compact-field"><label for="rechtsstand">Rechtsstand</label><select id="rechtsstand"><option value="2025-06-01">01.06.2025</option><option value="2021-01-01">01.01.2021</option><option value="2013-08-01">01.08.2013</option><option value="2004-07-01">01.07.2004</option></select></div>
-              <div class="compact-field"><label for="streitwertAusgabe">Gerichtlicher Streitwert</label><input id="streitwertAusgabe" type="text" inputmode="decimal"></div>
+              <div class="compact-field"><label for="rechtsstand" data-label-key="output.rechtsstand">Rechtsstand</label><select id="rechtsstand"><option value="2025-06-01">01.06.2025</option><option value="2021-01-01">01.01.2021</option><option value="2013-08-01">01.08.2013</option><option value="2004-07-01">01.07.2004</option></select></div>
+              <div class="compact-field"><label for="streitwertAusgabe" data-label-key="output.streitwert">Gerichtlicher Streitwert</label><input id="streitwertAusgabe" type="text" inputmode="decimal"></div>
             </div>
           </section>
 
           <section class="summary-grid" aria-labelledby="gesamtHeading">
-            <h2 id="gesamtHeading" class="visually-hidden">Zusammenfassung</h2>
-            <article class="summary-card"><span>Vorgerichtlich</span><strong id="summeVorgerichtlich">0,00 €</strong></article>
-            <article class="summary-card"><span>I. Instanz</span><strong id="summeInstanz1">0,00 €</strong></article>
-            <article class="summary-card"><span>II. Instanz</span><strong id="summeInstanz2">0,00 €</strong></article>
-            <article class="summary-card"><span>III. Instanz</span><strong id="summeInstanz3">0,00 €</strong></article>
-            <article class="summary-card summary-card-total"><span>Gesamtrisiko</span><strong id="summeGesamt" aria-live="polite">0,00 €</strong></article>
+            <h2 id="gesamtHeading" class="visually-hidden" data-label-key="output.zusammenfassung">Zusammenfassung</h2>
+            <article class="summary-card"><span data-label-key="output.vorgerichtlich">Vorgerichtlich</span><strong id="summeVorgerichtlich">0,00 €</strong></article>
+            <article class="summary-card"><span data-label-key="output.instanz1">I. Instanz</span><strong id="summeInstanz1">0,00 €</strong></article>
+            <article class="summary-card"><span data-label-key="output.instanz2">II. Instanz</span><strong id="summeInstanz2">0,00 €</strong></article>
+            <article class="summary-card"><span data-label-key="output.instanz3">III. Instanz</span><strong id="summeInstanz3">0,00 €</strong></article>
+            <article class="summary-card summary-card-total"><span data-label-key="output.gesamtrisiko">Gesamtrisiko</span><strong id="summeGesamt" aria-live="polite">0,00 €</strong></article>
           </section>
 
           <div id="warnungen" class="notice-card" role="status" aria-live="polite" hidden></div>
@@ -53,7 +54,7 @@
           <datalist id="vat-rate-options"><option value="0"></option><option value="7"></option><option value="16"></option><option value="19"></option></datalist>
           <section id="vorgerichtlichBereich" class="form-card" hidden></section>
           <section id="instanzenContainer"></section>
-          <section class="form-card metadata-card"><h2>Berechnungsgrundlagen</h2><dl id="metadaten"></dl></section>
+          <section class="form-card metadata-card"><h2 data-label-key="output.grundlagen">Berechnungsgrundlagen</h2><dl id="metadaten"></dl></section>
         </section>
       </div></main>
     </div>

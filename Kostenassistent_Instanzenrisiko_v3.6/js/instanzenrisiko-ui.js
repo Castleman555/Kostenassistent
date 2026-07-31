@@ -2,6 +2,7 @@
   "use strict";
 
   const { formatCent, parseGermanMoneyToCent, createStableId, clampInteger } = global.FormUtils;
+  const text = (key, parameters) => global.InstanzenrisikoText?.get(key, parameters) ?? key;
 
   const state = {
     streitwert: {
@@ -36,6 +37,7 @@
   }
 
   function init() {
+    global.InstanzenrisikoText?.apply();
     elements = {
       form: document.getElementById("instanzenrisikoForm"),
       gesamtstreitwert: document.getElementById("gesamtstreitwert"),

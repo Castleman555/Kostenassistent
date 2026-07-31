@@ -4,6 +4,7 @@
   const POSITIONS = ["procedure", "increase", "hearing", "settlement"];
   const COURT_FACTOR_OPTIONS = Object.freeze({ 1: [1, 3], 2: [1, 2, 3, 4], 3: [1, 3, 5] });
   const { formatCent, parseGermanMoneyToCent } = global.FormUtils;
+  const text = (key, parameters) => global.InstanzenrisikoText?.get(key, parameters) ?? key;
   const configuration = structuredClone(global.InstanzenrisikoBerechnung.DEFAULT_CONFIGURATION);
   let feeTables, storedData, activeCase, storedModule, elements;
 
@@ -16,6 +17,7 @@
   document.addEventListener("DOMContentLoaded", init);
 
   async function init() {
+    global.InstanzenrisikoText?.apply();
     cacheElements();
     try {
       activeCase = global.KostenassistentStorage?.ensureActiveCase();
@@ -536,13 +538,13 @@
     elements.pretrial.hidden = false;
     const dateOptions = [{ value: "", label: "Allgemeinen Rechtsstand verwenden" }, ...Array.from(elements.rechtsstand.options, (option) => ({ value: option.value, label: option.textContent }))]
       .map((option) => `<option value="${option.value}"${(uiState.pretrialEffectiveDate || "") === option.value ? " selected" : ""}>${option.label}</option>`).join("");
-    elements.pretrial.innerHTML = `<h2>Vorgerichtliche Rechtsanwaltskosten <label class="heading-checkbox"><input type="checkbox" data-pretrial-enabled ${uiState.pretrialEnabled ? "checked" : ""}> berücksichtigen</label></h2><div class="compact-field pretrial-date-field"><label for="vorgerichtlicherRechtsstand">Rechtsstand vorgerichtliche Rechtsanwaltskosten</label><select id="vorgerichtlicherRechtsstand" data-pretrial-effective-date>${dateOptions}</select></div>${uiState.pretrialEnabled ? renderAttorneyTable(pretrial.claimant, "Klägerseite – vorgerichtlich", { pretrial: true }) : '<p class="muted-text">Vorgerichtliche Rechtsanwaltskosten sind deaktiviert.</p>'}`;
+    elements.pretrial.innerHTML = `<h2>${text("output.pretrialCosts")} <label class="heading-checkbox"><input type="checkbox" data-pretrial-enabled ${uiState.pretrialEnabled ? "checked" : ""}> ${text("actions.consider")}</label></h2><div class="compact-field pretrial-date-field"><label for="vorgerichtlicherRechtsstand">${text("output.pretrialLawDate")}</label><select id="vorgerichtlicherRechtsstand" data-pretrial-effective-date>${dateOptions}</select></div>${uiState.pretrialEnabled ? renderAttorneyTable(pretrial.claimant, text("parties.pretrialClaimant"), { pretrial: true }) : `<p class="muted-text">${text("output.pretrialDisabled")}</p>`}`;
   }
 
   function renderInstance(instance) {
     const section = document.createElement("section"); section.className = "form-card instance-card";
     const n = instance.number;
-    section.innerHTML = `<h2 class="instance-heading"><span>${roman(n)}. Instanz</span><button type="button" class="secondary-button compact-button" data-reset-instance="${n}">Werte zurücksetzen</button></h2><div class="result-two-column"><div>${renderAttorneyTable(instance.claimantAttorneyCosts, "Rechtsanwaltskosten Klägerseite", { instance: n, side: "claimant" })}</div><div>${renderAttorneyTable(instance.defendantAttorneyCosts, "Rechtsanwaltskosten Beklagtenseite", { instance: n, side: "defendant" })}</div></div><h3>Gerichtskosten</h3><div class="result-line"><label>Gerichtsgebühren <select class="court-factor-select" data-court-factor="${n}" aria-label="Faktor Gerichtsgebühren ${roman(n)}. Instanz">${courtFactorOptions(n)}</select></label><strong>${formatCent(instance.courtCosts.amountCent)}</strong></div><div class="result-line result-total"><span>Gesamt ${roman(n)}. Instanz</span><strong>${formatCent(instance.subtotalCent)}</strong></div><div class="result-line"><span>Kumuliertes Risiko</span><strong>${formatCent(instance.cumulativeTotalCent)}</strong></div>`;
+    section.innerHTML = `<h2 class="instance-heading"><span>${text("dynamic.instance", roman(n))}</span><button type="button" class="secondary-button compact-button" data-reset-instance="${n}">${text("actions.resetValues")}</button></h2><div class="result-two-column"><div>${renderAttorneyTable(instance.claimantAttorneyCosts, text("parties.claimantCosts"), { instance: n, side: "claimant" })}</div><div>${renderAttorneyTable(instance.defendantAttorneyCosts, text("parties.defendantCosts"), { instance: n, side: "defendant" })}</div></div><h3>${text("fees.courtCosts")}</h3><div class="result-line"><label>${text("fees.courtFees")} <select class="court-factor-select" data-court-factor="${n}" aria-label="Faktor ${text("fees.courtFees")} ${text("dynamic.instance", roman(n))}">${courtFactorOptions(n)}</select></label><strong>${formatCent(instance.courtCosts.amountCent)}</strong></div><div class="result-line result-total"><span>${text("dynamic.instanceTotal", roman(n))}</span><strong>${formatCent(instance.subtotalCent)}</strong></div><div class="result-line"><span>${text("fees.cumulativeRisk")}</span><strong>${formatCent(instance.cumulativeTotalCent)}</strong></div>`;
     return section;
   }
 
@@ -570,16 +572,16 @@
   function renderAttorneyTable(costs, title, context = {}) {
     const rows = costs.groups.map((group) => {
       if (context.pretrial) {
-        const credit = rowWithCheckbox("Anrechnung", uiState.groupParameters.pretrial[group.groupId].creditValueCent, group.creditFactor ? -group.creditFactor : 0, group.creditCent || 0, "pretrial", uiState.groupParameters.pretrial[group.groupId].creditPlacement === "pretrial", uiState.pretrialEnabled, group.groupId);
+        const credit = rowWithCheckbox(text("fees.credit"), uiState.groupParameters.pretrial[group.groupId].creditValueCent, group.creditFactor ? -group.creditFactor : 0, group.creditCent || 0, "pretrial", uiState.groupParameters.pretrial[group.groupId].creditPlacement === "pretrial", uiState.pretrialEnabled, group.groupId);
         return `<tr><th colspan="4" scope="rowgroup"><span>Vertretungsgruppe ${group.groupId} (${group.persons} Person${group.persons === 1 ? "" : "en"})</span> <button type="button" class="secondary-button compact-button group-reset-button" data-reset-pretrial-group="${group.groupId}">Werte zurücksetzen</button></th></tr>${businessRow(group)}${pretrialIncreaseRow(group)}${pretrialSettlementRow(group)}${credit}${editablePretrialOtherExpensesRow(group)}${row("Auslagenpauschale", null, null, group.expenseAllowanceCent)}${row("Zwischensumme", null, null, group.subtotalCent, true)}${vatRow("pretrial:0:claimant:" + group.groupId, group.vatRate, group.vatCent)}${row("Gesamt", null, null, group.totalCent, true)}`;
       }
       const groupContext = { ...context, groupId: group.groupId };
       const creditRow = context.instance === 1 && context.side === "claimant"
-        ? rowWithCheckbox("Anrechnung", uiState.groupParameters.pretrial[group.groupId]?.creditValueCent ?? uiState.creditValueCent, group.creditFactor ? -group.creditFactor : 0, group.creditCent || 0, "instance", uiState.groupParameters.pretrial[group.groupId]?.creditPlacement === "instance", uiState.pretrialEnabled, group.groupId)
+        ? rowWithCheckbox(text("fees.credit"), uiState.groupParameters.pretrial[group.groupId]?.creditValueCent ?? uiState.creditValueCent, group.creditFactor ? -group.creditFactor : 0, group.creditCent || 0, "instance", uiState.groupParameters.pretrial[group.groupId]?.creditPlacement === "instance", uiState.pretrialEnabled, group.groupId)
         : "";
-      return `<tr><th colspan="4" scope="rowgroup"><span>Vertretungsgruppe ${group.groupId} (${group.persons} Person${group.persons === 1 ? "" : "en"})</span> <button type="button" class="secondary-button compact-button group-reset-button" data-reset-group="${context.instance}:${context.side}:${group.groupId}">Werte zurücksetzen</button></th></tr>${editableRow("Verfahrensgebühr", groupContext, "procedure", group.procedureFactor, group.procedureCent)}${editableIncreaseRow(groupContext, group.increaseFactor, group.increaseCent)}${creditRow}${editableRow("Terminsgebühr", groupContext, "hearing", group.hearingFactor, group.hearingCent, true)}${editableRow("Einigungsgebühr", groupContext, "settlement", group.settlementFactor, group.settlementCent)}${editableOtherExpensesRow(groupContext, group.otherExpensesCent)}${row("Auslagenpauschale", null, null, group.expenseAllowanceCent)}${row("Zwischensumme", null, null, group.subtotalCent, true)}${vatRow("instance:" + context.instance + ":" + context.side + ":" + group.groupId, group.vatRate, group.vatCent)}${row("Gesamt", null, null, group.totalCent, true)}`;
+      return `<tr><th colspan="4" scope="rowgroup"><span>${text("dynamic.group", { id: group.groupId, persons: group.persons })}</span> <button type="button" class="secondary-button compact-button group-reset-button" data-reset-group="${context.instance}:${context.side}:${group.groupId}">${text("actions.resetValues")}</button></th></tr>${editableRow(text("fees.procedure"), groupContext, "procedure", group.procedureFactor, group.procedureCent)}${editableIncreaseRow(groupContext, group.increaseFactor, group.increaseCent)}${creditRow}${editableRow(text("fees.hearing"), groupContext, "hearing", group.hearingFactor, group.hearingCent, true)}${editableRow(text("fees.settlement"), groupContext, "settlement", group.settlementFactor, group.settlementCent)}${editableOtherExpensesRow(groupContext, group.otherExpensesCent)}${row(text("fees.allowance"), null, null, group.expenseAllowanceCent)}${row(text("fees.subtotal"), null, null, group.subtotalCent, true)}${vatRow("instance:" + context.instance + ":" + context.side + ":" + group.groupId, group.vatRate, group.vatCent)}${row(text("fees.total"), null, null, group.totalCent, true)}`;
     }).join("");
-    return `<h3>${escapeHtml(title)}</h3><div class="table-wrap"><table class="data-table result-table"><thead><tr><th scope="col">Position</th><th scope="col">Gegenstandswert</th><th scope="col">Faktor</th><th scope="col">Betrag</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    return `<h3>${escapeHtml(title)}</h3><div class="table-wrap"><table class="data-table result-table"><thead><tr><th scope="col">${text("table.position")}</th><th scope="col">${text("table.gegenstandswert")}</th><th scope="col">${text("table.faktor")}</th><th scope="col">${text("table.betrag")}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
 

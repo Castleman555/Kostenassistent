@@ -422,12 +422,21 @@ a:focus-visible {
 
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 30px;
   padding-top: 22px;
   border-top: 1px solid var(--border);
 }
+
+[data-label-key], .field-label, .compact-field label, .result-line label,
+.settlement-checkbox-label, .summary-card, .instance-heading > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.parameter-grid > *, .party-count-grid > *, .party-details-grid > *, .result-two-column > * { min-width: 0; }
+.form-actions > * { max-width: 100%; white-space: normal; }
 
 .form-submit-button {
   min-height: 44px;

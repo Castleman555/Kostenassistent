@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Instanzenrisiko – Kostenassistent</title>
   <link rel="stylesheet" href="Richterassistent.css">
+  <script src="js/instanzenrisiko-beschriftungen.js" defer></script>
   <script src="js/form-utils.js" defer></script>
   <script src="js/storage.js" defer></script>
   <script src="js/instanzenrisiko-ui.js" defer></script>
@@ -25,9 +26,9 @@
     <div class="main-column">
       <header class="top-area compact-top-area">
         <div class="content">
-          <h1>Instanzenrisiko</h1>
-          <p class="version">Version 1.0 · Design: Richterassistent 1.0</p>
-          <p class="page-intro">Grunddaten zur späteren Berechnung des Prozesskostenrisikos erfassen.</p>
+          <h1 data-label-key="start.title">Instanzenrisiko</h1>
+          <p class="version" data-label-key="start.version">Version 1.0 · Design: Richterassistent 1.0</p>
+          <p class="page-intro" data-label-key="start.intro">Grunddaten zur späteren Berechnung des Prozesskostenrisikos erfassen.</p>
         </div>
       </header>
 
@@ -39,13 +40,13 @@
             <section class="form-section" aria-labelledby="streitwertHeading">
               <div class="section-heading-row">
                 <div>
-                  <h2 id="streitwertHeading">Streitwert</h2>
-                  <p class="section-hint">Gesamtstreitwert direkt eingeben oder in Teilstreitwerte aufgliedern.</p>
+                  <h2 id="streitwertHeading" data-label-key="start.streitwert">Streitwert</h2>
+                  <p class="section-hint" data-label-key="start.streitwertHint">Gesamtstreitwert direkt eingeben oder in Teilstreitwerte aufgliedern.</p>
                 </div>
               </div>
 
               <div class="money-control-row">
-                <label for="gesamtstreitwert" class="field-label">Streitwert (gesamt)</label>
+                <label for="gesamtstreitwert" class="field-label" data-label-key="start.gesamtstreitwert">Streitwert (gesamt)</label>
                 <div class="money-control">
                   <input
                     id="gesamtstreitwert"
@@ -57,8 +58,8 @@
                     value="0,00 €"
                     aria-describedby="gesamtstreitwertFehler"
                   >
-                  <button id="gesamtstreitwertLeeren" class="icon-button" type="button" aria-label="Gesamtstreitwert leeren" title="Gesamtstreitwert leeren">×</button>
-                  <button id="teilstreitwertHinzufuegen" class="icon-button primary-icon-button" type="button" aria-label="Teilstreitwert hinzufügen" title="Teilstreitwert hinzufügen">+</button>
+                  <button id="gesamtstreitwertLeeren" class="icon-button" type="button" data-aria-label-key="start.gesamtLeeren" data-title-key="start.gesamtLeeren" aria-label="Gesamtstreitwert leeren" title="Gesamtstreitwert leeren">×</button>
+                  <button id="teilstreitwertHinzufuegen" class="icon-button primary-icon-button" type="button" data-aria-label-key="start.teilwertHinzufuegen" data-title-key="start.teilwertHinzufuegen" aria-label="Teilstreitwert hinzufügen" title="Teilstreitwert hinzufügen">+</button>
                 </div>
                 <p id="gesamtstreitwertFehler" class="field-error" role="alert" hidden></p>
               </div>
@@ -85,15 +86,15 @@
             </section>
 
             <section class="form-section" aria-labelledby="personenHeading">
-              <h2 id="personenHeading">Anzahl der Personen auf Kläger- und Beklagtenseite</h2>
+              <h2 id="personenHeading" data-label-key="start.personen">Anzahl der Personen auf Kläger- und Beklagtenseite</h2>
 
               <div class="party-count-grid">
                 <div class="compact-field">
-                  <label for="anzahlKlaeger">Klägerseite</label>
+                  <label for="anzahlKlaeger" data-label-key="start.klaeger">Klägerseite</label>
                   <input id="anzahlKlaeger" name="anzahlKlaeger" class="two-digit-input" type="number" min="1" max="99" step="1" value="1" inputmode="numeric">
                 </div>
                 <div class="compact-field">
-                  <label for="anzahlBeklagte">Beklagtenseite</label>
+                  <label for="anzahlBeklagte" data-label-key="start.beklagte">Beklagtenseite</label>
                   <input id="anzahlBeklagte" name="anzahlBeklagte" class="two-digit-input" type="number" min="1" max="99" step="1" value="1" inputmode="numeric">
                 </div>
               </div>
@@ -112,9 +113,9 @@
             </section>
 
             <section class="form-section" aria-labelledby="vorgerichtlichHeading">
-              <h2 id="vorgerichtlichHeading">Vorgerichtliche Tätigkeit</h2>
+              <h2 id="vorgerichtlichHeading" data-label-key="start.vorgerichtlich">Vorgerichtliche Tätigkeit</h2>
               <div class="select-field">
-                <label for="vorgerichtlicheTaetigkeitKlaeger">Vorgerichtliche Tätigkeit auf Klägerseite?</label>
+                <label for="vorgerichtlicheTaetigkeitKlaeger" data-label-key="start.vorgerichtlichFrage">Vorgerichtliche Tätigkeit auf Klägerseite?</label>
                 <select id="vorgerichtlicheTaetigkeitKlaeger" name="vorgerichtlicheTaetigkeitKlaeger">
                   <option value="false" selected>Nein</option>
                   <option value="true">Ja</option>
@@ -125,14 +126,14 @@
             <div id="formularFehler" class="error-summary" role="alert" tabindex="-1" hidden></div>
 
             <div class="form-actions">
-              <button id="formularZuruecksetzen" class="secondary-button" type="button">Zurücksetzen</button>
-              <button id="datenPruefen" class="secondary-button" type="button">Eingaben prüfen</button>
-              <button id="instanzenrisikoBerechnen" class="nav-button form-submit-button" type="button">Instanzenrisiko berechnen</button>
+              <button id="formularZuruecksetzen" class="secondary-button" type="button" data-label-key="start.zuruecksetzen">Zurücksetzen</button>
+              <button id="datenPruefen" class="secondary-button" type="button" data-label-key="start.pruefen">Eingaben prüfen</button>
+              <button id="instanzenrisikoBerechnen" class="nav-button form-submit-button" type="button" data-label-key="start.berechnen">Instanzenrisiko berechnen</button>
             </div>
           </form>
 
           <section id="datenVorschauBereich" class="form-card preview-card" aria-labelledby="datenVorschauHeading" hidden>
-            <h2 id="datenVorschauHeading">Datenvorschau</h2>
+            <h2 id="datenVorschauHeading" data-label-key="start.vorschau">Datenvorschau</h2>
             <pre id="datenVorschau" class="data-preview"></pre>
           </section>
         </div>
