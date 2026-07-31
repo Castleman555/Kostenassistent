@@ -2,6 +2,7 @@
   "use strict";
 
   const { formatCent, parseGermanMoneyToCent, createStableId, clampInteger } = global.FormUtils;
+  const Streitwert = global.InstanzenrisikoStreitwert;
   const text = (key, parameters) => global.InstanzenrisikoText?.get(key, parameters) ?? key;
 
   const state = {
@@ -158,7 +159,7 @@
     }
 
     const lastItem = state.streitwert.teilwerte.at(-1);
-    if (lastItem && !lastItem.bezeichnung.trim() && partialAmountState.get(lastItem.id)?.entered === false) {
+    if (lastItem && Streitwert.isEmptyPosition(lastItem, partialAmountState.get(lastItem.id))) {
       focusPartialField(lastItem.id, "bezeichnung");
       return;
     }
@@ -247,7 +248,7 @@
   }
 
   function recalculateTotal() {
-    state.streitwert.gesamtCent = state.streitwert.teilwerte.reduce((sum, item) => sum + item.betragCent, 0);
+    state.streitwert.gesamtCent = Streitwert.sumPositions(state.streitwert.teilwerte);
   }
 
   function updatePartyCount(side) {
@@ -514,26 +515,8 @@
   }
 
   function validate() {
-    const errors = [];
-
-    if (!Number.isInteger(state.streitwert.gesamtCent) || state.streitwert.gesamtCent < 0) {
-      errors.push("Der Gesamtstreitwert ist ungültig.");
-    }
-
-    if (state.streitwert.modus === "teilwerte") {
-      state.streitwert.teilwerte.forEach((item, index) => {
-        const amountStatus = partialAmountState.get(item.id) || { entered: true, invalid: false };
-        const ignorableTrailingRow = index === state.streitwert.teilwerte.length - 1
-          && !item.bezeichnung.trim() && amountStatus.entered === false && !amountStatus.invalid;
-        if (ignorableTrailingRow) return;
-        if (!item.bezeichnung.trim()) {
-          errors.push(`Die Bezeichnung des Teilstreitwerts ${item.nummer} fehlt.`);
-        }
-        if (!amountStatus.entered || amountStatus.invalid || !Number.isInteger(item.betragCent) || item.betragCent < 0) {
-          errors.push(`Der Betrag des Teilstreitwerts ${item.nummer} ist ungültig.`);
-        }
-      });
-    }
+    const valueValidation = Streitwert.validateStreitwert(state.streitwert, partialAmountState);
+    const errors = valueValidation.errors.map((error) => error.message);
 
     ["klaegerseite", "beklagtenseite"].forEach((side) => {
       const party = state[side];
@@ -599,15 +582,7 @@
 
   function getData() {
     const data = structuredCloneSafe(state);
-    if (data.streitwert.modus === "teilwerte") {
-      while (data.streitwert.teilwerte.length) {
-        const last = data.streitwert.teilwerte.at(-1);
-        const amountStatus = partialAmountState.get(last.id);
-        if (last.bezeichnung.trim() || amountStatus?.entered !== false || amountStatus?.invalid) break;
-        data.streitwert.teilwerte.pop();
-      }
-      data.streitwert.teilwerte.forEach((item, index) => { item.nummer = index + 1; });
-    }
+    data.streitwert = Streitwert.prepareForStorage(data.streitwert, partialAmountState);
     return data;
   }
 

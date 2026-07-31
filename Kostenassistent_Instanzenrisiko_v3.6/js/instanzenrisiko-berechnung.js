@@ -303,5 +303,6 @@
     return { metadata: { creditValueCent: metadataCreditValueCent, calculatedAt: new Date().toISOString(), effectiveDate: input.effectiveDate, pretrialEffectiveDate, gkgVersion: baseGkg.version.effectiveFrom, rvgVersion: baseRvg.version.effectiveFrom, pretrialRvgVersion: pretrialRvg.version.effectiveFrom, valueCent: input.valueCent, gkgBaseFeeCent: baseGkg.lookup.feeCent, rvgBaseFeeCent: baseRvg.lookup.feeCent }, pretrial, instances, summary, warnings };
   }
 
+  // Öffentliche, DOM-unabhängige Fach-API. Parameter und Ergebnisse verwenden durchgängig Centbeträge.
   global.InstanzenrisikoBerechnung = Object.freeze({ DEFAULT_CONFIGURATION, roundCent, calculate, calculateAttorneyCosts, calculateCourtCosts, calculatePretrialCosts, calculateInstance, calculateRepresentationGroups, calculateCredit, calculateExpenseAllowance });
 })(window);

@@ -13,6 +13,28 @@
   }
   async function run() {
     const tables = await global.GebuehrentabellenService.load();
+    const valueApi = global.InstanzenrisikoStreitwert;
+    assert(Object.isFrozen(valueApi), "Die öffentliche Streitwert-API muss unveränderlich bereitgestellt werden.");
+    const valuePositions = [
+      { id: "a", nummer: 1, bezeichnung: "Klage", betragCent: 10000 },
+      { id: "b", nummer: 2, bezeichnung: "Widerklage", betragCent: 2500 }
+    ];
+    const valueSnapshot = JSON.stringify(valuePositions);
+    assert(valueApi.sumPositions(valuePositions) === 12500, "Einzelpositionen müssen DOM-unabhängig summiert werden.");
+    assert(JSON.stringify(valuePositions) === valueSnapshot, "Die Streitwertfunktionen dürfen Eingabedaten nicht verändern.");
+    const emptyPosition = { id: "empty", nummer: 3, bezeichnung: "", betragCent: 0 };
+    const inputStates = new Map([["a", { entered: true, invalid: false }], ["b", { entered: true, invalid: false }], ["empty", { entered: false, invalid: false }]]);
+    assert(valueApi.isEmptyPosition(emptyPosition, inputStates.get("empty")), "Eine unberührte leere Schlussposition muss erkannt werden.");
+    const cleanedPositions = valueApi.removeEmptyTrailingPositions([...valuePositions, emptyPosition], inputStates);
+    assert(cleanedPositions.length === 2 && cleanedPositions !== valuePositions, "Leere Schlusspositionen müssen in einer neuen Liste entfernt werden.");
+    const validPositions = valueApi.validatePositions([...valuePositions, emptyPosition], inputStates);
+    assert(validPositions.valid, "Eine vollständig leere Schlussposition darf die Validierung nicht blockieren.");
+    const invalidPositions = valueApi.validatePositions([{ id: "partial", nummer: 1, bezeichnung: "Klage", betragCent: 0 }], new Map([["partial", { entered: false, invalid: false }]]));
+    assert(!invalidPositions.valid && invalidPositions.errors[0].code === "invalid-amount", "Eine teilweise ausgefüllte Position muss strukturiert beanstandet werden.");
+    const invalidTotal = valueApi.validateStreitwert({ modus: "gesamt", gesamtCent: -1, teilwerte: [] }, new Map());
+    assert(!invalidTotal.valid && invalidTotal.errors[0].code === "invalid-total", "Der Gesamtstreitwert muss DOM-unabhängig validiert werden.");
+    const storageValue = valueApi.prepareForStorage({ modus: "teilwerte", gesamtCent: 99999, teilwerte: [...valuePositions, emptyPosition] }, inputStates);
+    assert(storageValue.gesamtCent === 12500 && storageValue.teilwerte.length === 2, "Die Speicheraufbereitung muss bereinigen und die Summe neu bilden.");
     const oneParty = { anzahlPersonen: 1, gruppen: [{ person: 1, gruppe: 1 }] };
     const makeInput = (overrides = {}) => ({
       effectiveDate: "2025-06-01", valueCent: 6000000, vatRate: 0.19, claimant: oneParty, defendant: oneParty,
@@ -254,8 +276,8 @@
     assert(startPageSourceText.includes("addPartialValue({ empty: true })"), "Enter bei einem gültigen Betrag muss genau eine leere Folgeposition anlegen.");
     assert(startPageSourceText.includes("event.preventDefault()"), "Die Enter-Navigation darf keine Standardaktion des Formulars auslösen.");
     assert(startPageSourceText.includes("if (!commitPartialAmount(item.id, amountInput))"), "Bei einem ungültigen Betrag darf keine neue Einzelposition entstehen.");
-    assert(startPageSourceText.includes("partialAmountState.get(last.id)"), "Automatisch erzeugte leere Schlusszeilen müssen vor Speicherung und Berechnung erkannt werden.");
-    assert(startPageSourceText.includes("data.streitwert.teilwerte.pop()"), "Eine vollständig leere Schlusszeile darf nicht gespeichert werden.");
+    assert(startPageSourceText.includes("Streitwert.prepareForStorage"), "Die UI muss die wiederverwendbare Speicheraufbereitung verwenden.");
+    assert(startPageSourceText.includes("Streitwert.validateStreitwert"), "Die UI muss die wiederverwendbare Streitwertvalidierung verwenden.");
     assert(startPageSourceText.includes('input.setAttribute("aria-invalid", "true")'), "Ungültige Beträge müssen barrierefrei als ungültig markiert werden.");
     assert(startPageSourceText.includes('partialAmountState.get(item.id)?.entered === false && event.target.value.trim() === ""'), "Ein noch nicht erfasstes Betragsfeld einer automatischen Leerzeile muss beim Fokussieren leer bleiben.");
     assert(!/factorInput\([^;\n]*procedureFactor/.test(sourceText), "Der Verfahrensgebührenfaktor darf kein editierbares Faktor-Feld besitzen.");
