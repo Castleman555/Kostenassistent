@@ -820,6 +820,14 @@ a:focus-visible {
   max-width: 100%;
   box-sizing: border-box;
 }
+.instanzenrisiko-ausgabe-page .result-table .vat-input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.3rem 0.25rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
 .result-table .group-reset-button {
   float: right;
   margin-left: .5rem;
