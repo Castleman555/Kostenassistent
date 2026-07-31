@@ -1,4 +1,6 @@
-# Dokumentation Instanzenrisiko – Version 2.0
+# Dokumentation Instanzenrisiko – historischer Änderungsverlauf
+
+> **Hinweis:** Diese Datei enthält historische, teilweise überholte Entwicklungsstände. Die konsolidierte Beschreibung des aktuell im Code verifizierten Sollstands steht in [DOKUMENTATION_INSTANZENRISIKO_AKTUELL.md](DOKUMENTATION_INSTANZENRISIKO_AKTUELL.md). Bei Widersprüchen ist die aktuelle Soll-Dokumentation maßgeblich; eine fachlich-rechtliche Prüfung bleibt davon unberührt.
 
 ## Projektstruktur
 
