@@ -16,6 +16,7 @@
   };
 
   const changeCallbacks = new Set();
+  const partialAmountState = new Map();
   const MODULE_NAME = "instanzenrisiko";
   const AUTOSAVE_DELAY = 300;
   let elements;
@@ -138,6 +139,7 @@
       bezeichnung: "Klageantrag Ziff. 1",
       betragCent: initialCent
     }];
+    partialAmountState.set(state.streitwert.teilwerte[0].id, { entered: true, invalid: false });
     recalculateTotal();
     renderStreitwert();
     emitChange();
@@ -148,32 +150,45 @@
     });
   }
 
-  function addPartialValue() {
+  function addPartialValue(options = {}) {
+    const { empty = false } = options;
     if (state.streitwert.modus !== "teilwerte") {
       activatePartialMode();
       return;
     }
 
+    const lastItem = state.streitwert.teilwerte.at(-1);
+    if (lastItem && !lastItem.bezeichnung.trim() && partialAmountState.get(lastItem.id)?.entered === false) {
+      focusPartialField(lastItem.id, "bezeichnung");
+      return;
+    }
+
     const nextNumber = state.streitwert.teilwerte.length + 1;
-    state.streitwert.teilwerte.push({
+    const nextItem = {
       id: createStableId(),
       nummer: nextNumber,
-      bezeichnung: `Klageantrag Ziff. ${nextNumber}`,
+      bezeichnung: empty ? "" : `Klageantrag Ziff. ${nextNumber}`,
       betragCent: 0
-    });
+    };
+    state.streitwert.teilwerte.push(nextItem);
+    partialAmountState.set(nextItem.id, { entered: !empty, invalid: false });
     renumberPartialValues();
     renderStreitwert();
     emitChange();
+    focusPartialField(nextItem.id, "bezeichnung");
+  }
 
+  function focusPartialField(id, field) {
     requestAnimationFrame(() => {
-      const row = elements.teilstreitwerteTabelle.querySelector(`tr[data-id="${CSS.escape(state.streitwert.teilwerte.at(-1).id)}"]`);
-      row?.querySelector("input[data-field='bezeichnung']")?.focus();
+      const row = elements.teilstreitwerteTabelle.querySelector(`tr[data-id="${CSS.escape(id)}"]`);
+      row?.querySelector(`input[data-field="${field}"]`)?.focus();
     });
   }
 
   function removePartialValue(id) {
     const removed = state.streitwert.teilwerte.find((item) => item.id === id);
     state.streitwert.teilwerte = state.streitwert.teilwerte.filter((item) => item.id !== id);
+    partialAmountState.delete(id);
 
     if (state.streitwert.teilwerte.length === 0) {
       state.streitwert.modus = "gesamt";
@@ -193,13 +208,36 @@
 
     if (field === "bezeichnung") {
       item.bezeichnung = rawValue;
-    } else if (field === "betragCent") {
-      const parsed = parseGermanMoneyToCent(rawValue);
-      item.betragCent = parsed === null || parsed < 0 ? 0 : parsed;
-      recalculateTotal();
     }
 
     emitChange();
+  }
+
+  function commitPartialAmount(id, input) {
+    const item = state.streitwert.teilwerte.find((entry) => entry.id === id);
+    if (!item) return false;
+    if (input.value.trim() === "" && !item.bezeichnung.trim()) {
+      partialAmountState.set(id, { entered: false, invalid: false });
+      input.removeAttribute("aria-invalid");
+      input.closest("td")?.querySelector(".field-error")?.setAttribute("hidden", "");
+      return true;
+    }
+    const parsed = parseGermanMoneyToCent(input.value);
+    if (input.value.trim() === "" || parsed === null || parsed < 0) {
+      partialAmountState.set(id, { entered: input.value.trim() !== "", invalid: true });
+      input.setAttribute("aria-invalid", "true");
+      input.closest("td")?.querySelector(".field-error")?.removeAttribute("hidden");
+      return false;
+    }
+    item.betragCent = parsed;
+    partialAmountState.set(id, { entered: true, invalid: false });
+    input.removeAttribute("aria-invalid");
+    input.closest("td")?.querySelector(".field-error")?.setAttribute("hidden", "");
+    input.value = formatCent(parsed);
+    recalculateTotal();
+    elements.gesamtstreitwert.value = formatCent(state.streitwert.gesamtCent);
+    emitChange();
+    return true;
   }
 
   function renumberPartialValues() {
@@ -299,6 +337,7 @@
     if (!partialMode) return;
 
     state.streitwert.teilwerte.forEach((item) => {
+      if (!partialAmountState.has(item.id)) partialAmountState.set(item.id, { entered: true, invalid: false });
       const row = document.createElement("tr");
       row.dataset.id = item.id;
 
@@ -313,24 +352,60 @@
       labelInput.setAttribute("list", "teilstreitwertBezeichnungen");
       labelInput.dataset.field = "bezeichnung";
       labelInput.setAttribute("aria-label", `Bezeichnung Teilstreitwert ${item.nummer}`);
-      labelInput.addEventListener("input", (event) => updatePartialValue(item.id, "bezeichnung", event.target.value));
+      labelInput.addEventListener("input", (event) => {
+        event.target.removeAttribute("aria-invalid");
+        updatePartialValue(item.id, "bezeichnung", event.target.value);
+      });
+      labelInput.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        row.querySelector("input[data-field='betragCent']")?.focus();
+      });
       labelCell.append(labelInput);
 
       const amountCell = document.createElement("td");
       const amountInput = document.createElement("input");
       amountInput.type = "text";
       amountInput.inputMode = "decimal";
-      amountInput.value = formatCent(item.betragCent);
+      const amountStatus = partialAmountState.get(item.id);
+      amountInput.value = amountStatus.entered ? formatCent(item.betragCent) : "";
       amountInput.className = "money-input table-money-input";
       amountInput.dataset.field = "betragCent";
       amountInput.setAttribute("aria-label", `Betrag Teilstreitwert ${item.nummer}`);
+      const amountErrorId = `teilstreitwert-betrag-fehler-${item.id}`;
+      amountInput.setAttribute("aria-describedby", amountErrorId);
+      if (amountStatus.invalid) amountInput.setAttribute("aria-invalid", "true");
       amountInput.addEventListener("focus", handleMoneyFocus);
+      amountInput.addEventListener("input", () => {
+        amountInput.removeAttribute("aria-invalid");
+        amountCell.querySelector(".field-error")?.setAttribute("hidden", "");
+      });
+      amountInput.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        if (!item.bezeichnung.trim()) {
+          labelInput.setAttribute("aria-invalid", "true");
+          labelInput.focus();
+          return;
+        }
+        if (!commitPartialAmount(item.id, amountInput)) {
+          amountInput.focus();
+          return;
+        }
+        amountInput.dataset.skipBlurCommit = "true";
+        addPartialValue({ empty: true });
+      });
       amountInput.addEventListener("blur", (event) => {
-        updatePartialValue(item.id, "betragCent", event.target.value);
-        event.target.value = formatCent(item.betragCent);
-        elements.gesamtstreitwert.value = formatCent(state.streitwert.gesamtCent);
+        if (event.target.dataset.skipBlurCommit === "true") return;
+        commitPartialAmount(item.id, event.target);
       });
       amountCell.append(amountInput);
+      const amountError = document.createElement("p");
+      amountError.id = amountErrorId;
+      amountError.className = "field-error";
+      amountError.textContent = "Bitte geben Sie einen gültigen, nicht negativen Betrag ein.";
+      amountError.hidden = !amountStatus.invalid;
+      amountCell.append(amountError);
 
       const actionCell = document.createElement("td");
       actionCell.className = "action-column";
@@ -443,11 +518,15 @@
     }
 
     if (state.streitwert.modus === "teilwerte") {
-      state.streitwert.teilwerte.forEach((item) => {
+      state.streitwert.teilwerte.forEach((item, index) => {
+        const amountStatus = partialAmountState.get(item.id) || { entered: true, invalid: false };
+        const ignorableTrailingRow = index === state.streitwert.teilwerte.length - 1
+          && !item.bezeichnung.trim() && amountStatus.entered === false && !amountStatus.invalid;
+        if (ignorableTrailingRow) return;
         if (!item.bezeichnung.trim()) {
           errors.push(`Die Bezeichnung des Teilstreitwerts ${item.nummer} fehlt.`);
         }
-        if (!Number.isInteger(item.betragCent) || item.betragCent < 0) {
+        if (!amountStatus.entered || amountStatus.invalid || !Number.isInteger(item.betragCent) || item.betragCent < 0) {
           errors.push(`Der Betrag des Teilstreitwerts ${item.nummer} ist ungültig.`);
         }
       });
@@ -516,7 +595,17 @@
   }
 
   function getData() {
-    return structuredCloneSafe(state);
+    const data = structuredCloneSafe(state);
+    if (data.streitwert.modus === "teilwerte") {
+      while (data.streitwert.teilwerte.length) {
+        const last = data.streitwert.teilwerte.at(-1);
+        const amountStatus = partialAmountState.get(last.id);
+        if (last.bezeichnung.trim() || amountStatus?.entered !== false || amountStatus?.invalid) break;
+        data.streitwert.teilwerte.pop();
+      }
+      data.streitwert.teilwerte.forEach((item, index) => { item.nummer = index + 1; });
+    }
+    return data;
   }
 
   function setData(data) {
@@ -525,10 +614,12 @@
     }
 
     const next = structuredCloneSafe(data);
+    partialAmountState.clear();
     Object.assign(state.streitwert, next.streitwert || {});
     Object.assign(state.klaegerseite, next.klaegerseite || {});
     Object.assign(state.beklagtenseite, next.beklagtenseite || {});
     state.vorgerichtlicheTaetigkeitKlaeger = Boolean(next.vorgerichtlicheTaetigkeitKlaeger);
+    state.streitwert.teilwerte.forEach((item) => partialAmountState.set(item.id, { entered: true, invalid: false }));
 
     renumberPartialValues();
     if (state.streitwert.modus === "teilwerte") recalculateTotal();
@@ -543,6 +634,7 @@
     autosaveSuppressed = true;
     clearTimeout(autosaveTimer);
     state.streitwert = { modus: "gesamt", gesamtCent: 0, teilwerte: [] };
+    partialAmountState.clear();
     state.klaegerseite = createDefaultPartyState();
     state.beklagtenseite = createDefaultPartyState();
     state.vorgerichtlicheTaetigkeitKlaeger = false;

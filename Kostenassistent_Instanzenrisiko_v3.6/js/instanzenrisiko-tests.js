@@ -250,6 +250,13 @@
     assert(startPageSourceText.includes("pretrialEffectiveDate: null"), "Der individuelle vorgerichtliche Rechtsstand muss beim Berechnen zurückgesetzt werden.");
     assert(startPageSourceText.includes("businessFactor: 1.3"), "Der vorgerichtliche Geschäftsgebührenfaktor muss auf den Ausgangswert zurückgesetzt werden.");
     assert(startPageSourceText.includes("groupParameters: {"), "Individuelle gruppenspezifische Ausgabewerte dürfen beim Berechnen nicht übernommen werden.");
+    assert(startPageSourceText.includes("row.querySelector(\"input[data-field='betragCent']\")?.focus()"), "Enter in der Bezeichnung muss den Betrag derselben Einzelposition fokussieren.");
+    assert(startPageSourceText.includes("addPartialValue({ empty: true })"), "Enter bei einem gültigen Betrag muss genau eine leere Folgeposition anlegen.");
+    assert(startPageSourceText.includes("event.preventDefault()"), "Die Enter-Navigation darf keine Standardaktion des Formulars auslösen.");
+    assert(startPageSourceText.includes("if (!commitPartialAmount(item.id, amountInput))"), "Bei einem ungültigen Betrag darf keine neue Einzelposition entstehen.");
+    assert(startPageSourceText.includes("partialAmountState.get(last.id)"), "Automatisch erzeugte leere Schlusszeilen müssen vor Speicherung und Berechnung erkannt werden.");
+    assert(startPageSourceText.includes("data.streitwert.teilwerte.pop()"), "Eine vollständig leere Schlusszeile darf nicht gespeichert werden.");
+    assert(startPageSourceText.includes('input.setAttribute("aria-invalid", "true")'), "Ungültige Beträge müssen barrierefrei als ungültig markiert werden.");
     assert(!/factorInput\([^;\n]*procedureFactor/.test(sourceText), "Der Verfahrensgebührenfaktor darf kein editierbares Faktor-Feld besitzen.");
     assert(sourceText.includes("Fest vorgegebener Faktor Verfahrensgebühr"), "Der Verfahrensgebührenfaktor muss als fest vorgegebene Ausgabe angezeigt werden.");
     assert(sourceText.includes("procedureFactor: configuration.instances[instance - 1].procedureFee"), "Gespeicherte Fälle müssen auf die instanzabhängigen Standardfaktoren normalisiert werden.");
