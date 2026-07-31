@@ -257,6 +257,7 @@
     assert(startPageSourceText.includes("partialAmountState.get(last.id)"), "Automatisch erzeugte leere Schlusszeilen müssen vor Speicherung und Berechnung erkannt werden.");
     assert(startPageSourceText.includes("data.streitwert.teilwerte.pop()"), "Eine vollständig leere Schlusszeile darf nicht gespeichert werden.");
     assert(startPageSourceText.includes('input.setAttribute("aria-invalid", "true")'), "Ungültige Beträge müssen barrierefrei als ungültig markiert werden.");
+    assert(startPageSourceText.includes('partialAmountState.get(item.id)?.entered === false && event.target.value.trim() === ""'), "Ein noch nicht erfasstes Betragsfeld einer automatischen Leerzeile muss beim Fokussieren leer bleiben.");
     assert(!/factorInput\([^;\n]*procedureFactor/.test(sourceText), "Der Verfahrensgebührenfaktor darf kein editierbares Faktor-Feld besitzen.");
     assert(sourceText.includes("Fest vorgegebener Faktor Verfahrensgebühr"), "Der Verfahrensgebührenfaktor muss als fest vorgegebene Ausgabe angezeigt werden.");
     assert(sourceText.includes("procedureFactor: configuration.instances[instance - 1].procedureFee"), "Gespeicherte Fälle müssen auf die instanzabhängigen Standardfaktoren normalisiert werden.");

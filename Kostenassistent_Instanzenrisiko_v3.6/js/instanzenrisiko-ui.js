@@ -375,7 +375,10 @@
       const amountErrorId = `teilstreitwert-betrag-fehler-${item.id}`;
       amountInput.setAttribute("aria-describedby", amountErrorId);
       if (amountStatus.invalid) amountInput.setAttribute("aria-invalid", "true");
-      amountInput.addEventListener("focus", handleMoneyFocus);
+      amountInput.addEventListener("focus", (event) => {
+        if (partialAmountState.get(item.id)?.entered === false && event.target.value.trim() === "") return;
+        handleMoneyFocus(event);
+      });
       amountInput.addEventListener("input", () => {
         amountInput.removeAttribute("aria-invalid");
         amountCell.querySelector(".field-error")?.setAttribute("hidden", "");
