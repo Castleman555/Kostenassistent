@@ -31,7 +31,6 @@
     elements = {
       fehler: document.getElementById("ausgabeFehler"), berechnungsBereich: document.getElementById("berechnungsBereich"),
       rechtsstand: document.getElementById("rechtsstand"), streitwert: document.getElementById("streitwertAusgabe"),
-      terminationInstance: document.getElementById("beendigungsInstanz"), terminationType: document.getElementById("beendigungsArt"),
       warnungen: document.getElementById("warnungen"), status: document.getElementById("ausgabeStatus"), pretrial: document.getElementById("vorgerichtlichBereich"), instances: document.getElementById("instanzenContainer"), metadaten: document.getElementById("metadaten"),
       sums: [null, document.getElementById("summeInstanz1"), document.getElementById("summeInstanz2"), document.getElementById("summeInstanz3")],
       pretrialSum: document.getElementById("summeVorgerichtlich"), totalSum: document.getElementById("summeGesamt")
@@ -230,8 +229,6 @@
     uiState.groupParameters = initializeGroupParameters(saved);
     elements.rechtsstand.value = uiState.effectiveDate;
     elements.streitwert.value = formatCent(uiState.valueCent);
-    elements.terminationInstance.value = uiState.termination.instance ? String(uiState.termination.instance) : "";
-    updateTerminationOptions(false); elements.terminationType.value = uiState.termination.type || "";
   }
 
   function bindEvents() {
@@ -244,17 +241,6 @@
       elements.streitwert.blur();
     });
     elements.streitwert.addEventListener("blur", commitCourtValue);
-    elements.terminationInstance.addEventListener("change", () => {
-      const previous = uiState.termination;
-      updateTerminationOptions(true);
-      applyTerminationCourtFactor(previous, { instance: Number(elements.terminationInstance.value || 0), type: "" });
-      recalculateAndRender();
-    });
-    elements.terminationType.addEventListener("change", () => {
-      const previous = uiState.termination;
-      applyTerminationCourtFactor(previous, { instance: Number(elements.terminationInstance.value || 0), type: elements.terminationType.value });
-      recalculateAndRender();
-    });
     elements.pretrial.addEventListener("change", handleDynamicChange);
     elements.pretrial.addEventListener("keydown", handleDynamicKeydown);
     elements.pretrial.addEventListener("blur", handleDynamicBlur, true);
@@ -296,16 +282,9 @@
       const instance = Number(target.dataset.instanceSettlementEnabled);
       const previous = uiState.termination;
       if (target.checked) {
-        elements.terminationInstance.value = String(instance);
-        uiState.termination = { instance, type: "comparison" };
-        updateTerminationOptions(false);
-        elements.terminationType.value = "comparison";
-        applyTerminationCourtFactor(previous, uiState.termination);
-      } else if (Number(elements.terminationInstance.value) === instance && elements.terminationType.value === "comparison") {
-        elements.terminationInstance.value = "";
-        uiState.termination = { instance: 0, type: "" };
-        updateTerminationOptions(false);
-        applyTerminationCourtFactor(previous, uiState.termination);
+        applyTerminationCourtFactor(previous, { instance, type: "comparison" });
+      } else if (uiState.termination.instance === instance && uiState.termination.type === "comparison") {
+        applyTerminationCourtFactor(previous, { instance: 0, type: "" });
       }
     } else if (target.matches("[data-court-factor]")) {
       const instance = Number(target.dataset.courtFactor);
@@ -500,32 +479,13 @@
   }
 
   function updateTerminationAvailability() {
-    const second = elements.terminationInstance.querySelector('option[value="2"]');
-    const third = elements.terminationInstance.querySelector('option[value="3"]');
-    second.disabled = uiState.valueCent <= 100000;
-    third.disabled = uiState.valueCent <= 2500000;
-    const selected = elements.terminationInstance.value;
-    if ((second.disabled && selected === "2") || (third.disabled && selected === "3")) {
-      elements.terminationInstance.value = "";
-      updateTerminationOptions(true);
-    }
-  }
-
-  function updateTerminationOptions(resetType) {
-    updateTerminationAvailability();
-    const instance = Number(elements.terminationInstance.value || 0);
-    const prior = resetType ? "" : uiState.termination.type;
-    const options = [{ value: "", label: "– keine Auswahl –" }];
-    if (instance === 1) options.push({ value: "comparison", label: "Vergleich" }, { value: "withdrawal", label: "Klagerücknahme" }, { value: "zpo91a", label: "§ 91a ZPO" }, { value: "waiver", label: "Verzicht" });
-    if (instance === 2 || instance === 3) options.push({ value: "comparison", label: "Vergleich" });
-    elements.terminationType.replaceChildren(...options.map((item) => { const option = document.createElement("option"); option.value = item.value; option.textContent = item.label; return option; }));
-    elements.terminationType.disabled = instance === 0;
-    elements.terminationType.value = options.some((x) => x.value === prior) ? prior : "";
+    const unavailable = (uiState.termination.instance === 2 && uiState.valueCent <= 100000)
+      || (uiState.termination.instance === 3 && uiState.valueCent <= 2500000);
+    if (unavailable) applyTerminationCourtFactor(uiState.termination, { instance: 0, type: "" });
   }
 
   function buildInput() {
     uiState.effectiveDate = elements.rechtsstand.value;
-    uiState.termination = { instance: Number(elements.terminationInstance.value || 0), type: elements.terminationType.value };
     return {
       effectiveDate: uiState.effectiveDate, valueCent: uiState.valueCent, vatRate: uiState.vatRate,
       claimant: storedData.klaegerseite, defendant: storedData.beklagtenseite,

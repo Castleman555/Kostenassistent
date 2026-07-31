@@ -517,6 +517,7 @@ a:focus-visible {
 
 /* Instanzenrisiko – Änderungsaufträge 1–14, Version 2.1 */
 .parameter-grid-three { grid-template-columns: minmax(170px, .7fr) minmax(190px, .8fr) minmax(440px, 1.5fr); align-items: end; }
+.parameter-grid-two { grid-template-columns: repeat(2, minmax(190px, 1fr)); align-items: end; }
 .compact-field select, .termination-row select, .instance-controls select { width: 100%; min-height: 42px; }
 .termination-field { min-width: 0; }
 .termination-row { display: grid; grid-template-columns: minmax(150px, 1fr) auto minmax(180px, 1.2fr); gap: 10px; align-items: center; }

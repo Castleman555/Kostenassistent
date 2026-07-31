@@ -56,6 +56,12 @@
       assert(result.instances[index].claimantAttorneyCosts.groups[0].settlementFactor === expectedFactor, `Standardfaktor Einigungsgebühr Instanz ${instanceNumber} Klägerseite muss ${expectedFactor} sein.`);
       assert(result.instances[index].defendantAttorneyCosts.groups[0].settlementFactor === expectedFactor, `Standardfaktor Einigungsgebühr Instanz ${instanceNumber} Beklagtenseite muss ${expectedFactor} sein.`);
     });
+    const legacyWithdrawal = global.InstanzenrisikoBerechnung.calculate(makeInput({
+      termination: { instance: 1, type: "withdrawal" }, courtFactors: { 1: 1, 2: 4, 3: 5 }
+    }), tables);
+    assert(legacyWithdrawal.instances.length === 1, "Eine gespeicherte Klagerücknahme muss das Verfahren weiterhin in der I. Instanz beenden.");
+    assert(legacyWithdrawal.instances[0].courtCosts.factor === 1, "Eine gespeicherte Klagerücknahme muss den bisherigen Gerichtsgebührenfaktor weiterverwenden.");
+    assert(legacyWithdrawal.instances[0].claimantAttorneyCosts.groups[0].settlementCent === 0, "Eine gespeicherte Klagerücknahme darf keine Einigungsgebühr auslösen.");
     assert(normal.instances.length === 3, "Drei Instanzen müssen berechnet werden.");
     assert(normal.instances[2].claimantAttorneyCosts.groups[0].procedureFactor === 2.3, "Verfahrensgebühr III. Instanz Klägerseite muss 2,3 sein.");
     assert(normal.instances[2].defendantAttorneyCosts.groups[0].procedureFactor === 2.3, "Verfahrensgebühr III. Instanz Beklagtenseite muss 2,3 sein.");
@@ -232,6 +238,8 @@
 
     const sourceResponse = await fetch("js/instanzenrisiko-ausgabe.js", { cache: "no-store" });
     const sourceText = await sourceResponse.text();
+    const outputPageResponse = await fetch("Instanzenrisiko_Ausgabe.html", { cache: "no-store" });
+    const outputPageText = await outputPageResponse.text();
     const startPageSourceResponse = await fetch("js/instanzenrisiko-ui.js", { cache: "no-store" });
     const startPageSourceText = await startPageSourceResponse.text();
     assert(startPageSourceText.includes('saveCurrentDraft({ silent: true, resetOutputToDefaults: true })'), "Nur der Berechnen-Button muss die vollständige Rücksetzung der Ausgabewerte auslösen.");
@@ -254,7 +262,10 @@
     assert(sourceText.includes('class="settlement-checkbox-label"') && sourceText.includes('class="settlement-checkbox"'), "Das Vergleichskontrollkästchen muss unmittelbar hinter der Bezeichnung sichtbar dargestellt werden.");
     assert(sourceText.includes('position === "settlement" && context.side === "claimant"'), "Vergleichskontrollkästchen dürfen ausschließlich auf der Klägerseite erscheinen.");
     assert(sourceText.includes('target.matches("[data-instance-settlement-enabled]")'), "Gerichtliche Vergleichskontrollkästchen müssen die Beendigungsparameter steuern.");
-    assert(sourceText.includes('elements.terminationType.value = "comparison"'), "Ein gerichtliches Vergleichskontrollkästchen muss die Beendigungsart Vergleich setzen.");
+    assert(sourceText.includes('applyTerminationCourtFactor(previous, { instance, type: "comparison" })'), "Ein gerichtliches Vergleichskontrollkästchen muss den internen Vergleichszustand direkt setzen.");
+    assert(!outputPageText.includes('id="beendigungsInstanz"') && !outputPageText.includes('id="beendigungsArt"'), "Die beiden Auswahlfelder zur Verfahrensbeendigung müssen aus dem DOM entfernt sein.");
+    assert(!outputPageText.includes("Verfahren vollständig beendet in:") && !outputPageText.includes("<span>durch</span>"), "Die Beschriftungen der entfernten Verfahrensbeendigungsfelder dürfen nicht mehr vorhanden sein.");
+    assert(!sourceText.includes("terminationInstance") && !sourceText.includes("terminationType") && !sourceText.includes("updateTerminationOptions"), "Das JavaScript darf nicht mehr auf die entfernten Auswahlfelder zugreifen.");
     assert(sourceText.includes("pretrialSettlementEndsProceedings"), "Die aktivierte vorgerichtliche Einigungsgebühr muss die Instanzberechnung und -darstellung beenden.");
     assert(sourceText.includes("const COURT_FACTOR_OPTIONS = Object.freeze({ 1: [1, 3], 2: [1, 2, 3, 4], 3: [1, 3, 5] })"), "Die zulässigen Gerichtsgebührenfaktoren müssen instanzspezifisch festgelegt sein.");
     assert(sourceText.includes('data-court-factor="${n}"'), "Jede dargestellte Instanz muss ein Dropdown für den Gerichtsgebührenfaktor besitzen.");
