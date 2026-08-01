@@ -832,10 +832,107 @@ a:focus-visible {
   float: right;
   margin-left: .5rem;
 }
+
+/* Baumbachsche Formel – geführter Drei-Schritt-Assistent */
+.baumbach-page .content, .baumbach-page .form-card, .baumbach-page .status-message { width: min(1120px, 100%); }
+.eyebrow, .step-kicker { margin: 0 0 .35rem; color: var(--primary); font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.step-list { display: grid; gap: .75rem; margin: 1.5rem 0; padding: 0; list-style: none; }
+.step-list li { display: flex; align-items: center; gap: .7rem; padding: .75rem; border-radius: 8px; color: var(--muted); }
+.step-list li span { display: grid; width: 1.8rem; height: 1.8rem; place-items: center; border: 1px solid var(--border); border-radius: 50%; background: white; font-weight: 700; }
+.step-list li.active { background: white; color: var(--primary); font-weight: 700; box-shadow: 0 2px 8px rgba(31,41,51,.08); }
+.step-list li.active span { border-color: var(--primary); background: var(--primary); color: white; }
+.step-list li.done span { border-color: #25855a; background: #25855a; color: white; }
+.sidebar-back { margin-top: 1rem; }
+.baumbach-page h2 { margin: 0 0 .4rem; color: var(--primary); }
+.baumbach-page h3 { margin-top: 0; }
+.help-button, .copy-button { min-height: 40px; padding: .55rem .8rem; border: 1px solid #9fb5c9; border-radius: 8px; background: #f5f8fc; color: var(--primary); font-weight: 700; cursor: pointer; }
+.baumbach-grid { display: grid; gap: 1rem; }
+.baumbach-grid.three-columns { grid-template-columns: 1.4fr 1fr 1fr; }
+.baumbach-grid label { display: grid; gap: .45rem; }
+.baumbach-input-table input { width: 100%; }
+.baumbach-input-table th:first-child { min-width: 180px; }
+.baumbach-input-table tfoot { font-weight: 700; background: #f7f9fb; }
+.money-field { display: grid; grid-template-columns: minmax(7rem,1fr) auto; align-items: center; gap: .4rem; }
+.money-field input { text-align: right; font-variant-numeric: tabular-nums; }
+.calculated-cell { text-align: right !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.inline-help { margin: 1rem 0 0; padding: .8rem 1rem; border-left: 4px solid #78a2c8; background: #f5f8fc; color: #3b4c5d; line-height: 1.5; }
+.toggle-heading, .output-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.switch-label { display: flex; align-items: center; gap: .5rem; font-weight: 700; white-space: nowrap; }
+.joint-fields { display: grid; grid-template-columns: minmax(240px,.8fr) minmax(320px,1.2fr); gap: 1.25rem; margin-top: 1.25rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: 8px; background: #fbfcfd; }
+.joint-fields .inline-help { grid-column: 1 / -1; margin: 0; }
+.joint-fields fieldset { border: 0; padding: 0; }
+.joint-fields legend { margin-bottom: .65rem; font-weight: 700; }
+.checkbox-grid { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; }
+.checkbox-grid label { display: flex; gap: .4rem; align-items: center; }
+.check-badge, .approved-badge { padding: .55rem .75rem; border-radius: 999px; background: #e7f6ee; color: #17633f; font-weight: 700; white-space: nowrap; }
+.review-table td { text-align: right; font-variant-numeric: tabular-nums; }
+.review-table tfoot { font-weight: 700; }
+.inline-edit-button { margin-top: 1rem; }
+.calculation-cards, .output-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
+.calculation-cards article, .text-output-card { padding: 1.2rem; border: 1px solid var(--border); border-radius: 9px; background: #fbfcfd; }
+.calculation-cards p { padding-bottom: .65rem; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.text-output-card textarea { width: 100%; margin-top: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; resize: vertical; font: 1rem/1.55 Arial, sans-serif; color: var(--text); }
+.output-heading h3 { margin: .6rem 0 0; }
+.legal-note { margin-top: 1.25rem; padding: 1rem; border: 1px solid #e4c47a; border-radius: 8px; background: #fffaf0; color: #624a16; line-height: 1.5; }
+#helpDialog { width: min(590px,calc(100% - 2rem)); padding: 1.7rem; border: 0; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.3); line-height: 1.55; }
+#helpDialog::backdrop { background: rgba(23,33,43,.55); }
+.dialog-close { float: right; border: 0; background: transparent; font-size: 1.8rem; cursor: pointer; }
+@media (max-width: 850px) { .baumbach-grid.three-columns, .calculation-cards, .output-grid, .joint-fields { grid-template-columns: 1fr; } .joint-fields .inline-help { grid-column: auto; } }
+@media (max-width: 620px) { .toggle-heading, .output-heading { flex-direction: column; } .baumbach-input-table { min-width: 720px; } }
 @media (max-width: 760px) {
   .result-table .group-reset-button {
     float: none;
     display: block;
     margin: .4rem 0 0;
   }
+}
+
+/* Baumbach 2.0: Parteien und gerichtete Prozessverhältnisse */
+.baumbach-page .compact-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .55rem; }
+.baumbach-page { overflow-x: hidden; }
+.baumbach-page .main-column, .baumbach-page .future-area, .baumbach-page .form-card, .baumbach-page .form-section { min-width: 0; max-width: 100%; }
+.party-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.party-entry { display: grid; grid-template-columns: 2rem minmax(0, 1.4fr) minmax(0, 1fr) 2.75rem; gap: .65rem; align-items: end; padding: .9rem; border: 1px solid var(--border); border-radius: 9px; background: #fbfcfd; }
+.party-entry label, .claim-entry label { display: grid; gap: .35rem; color: #3d4b59; font-size: .88rem; font-weight: 700; }
+.party-entry label, .claim-entry label, .claim-entry-head > *, .claim-fields > * { min-width: 0; }
+.party-entry input, .party-entry select, .claim-entry input, .claim-entry select { width: 100%; }
+.entry-number { display: grid; width: 1.8rem; height: 1.8rem; place-items: center; align-self: center; border-radius: 50%; background: var(--primary); color: white; font-weight: 800; }
+.claim-list { display: grid; gap: 1rem; }
+.claim-entry { overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: #fbfcfd; }
+.claim-entry-head { display: grid; grid-template-columns: 2rem minmax(12rem, 20rem) 2.75rem; gap: .7rem; align-items: end; padding: .75rem 1rem; background: var(--sidebar-bg); }
+.claim-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .85rem; padding: 1rem; }
+.joint-share.is-disabled { opacity: .45; }
+.display-settings .three-columns { grid-template-columns: repeat(2, minmax(12rem, 20rem)); }
+.responsive-review th small { display: block; margin-top: .25rem; color: var(--muted); font-weight: 400; }
+.responsive-review input { width: 8rem; text-align: right; }
+.result-party-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }
+.result-party-grid article { padding: 1rem; border: 1px solid var(--border); border-radius: 9px; background: #fbfcfd; }
+.result-party-grid h4 { margin: 0 0 .75rem; color: var(--primary); }
+.result-party-grid p { display: flex; justify-content: space-between; gap: .7rem; margin: .45rem 0; }
+.result-party-grid strong { font-variant-numeric: tabular-nums; }
+.joint-result { margin-top: .85rem; padding: .8rem 1rem; border-left: 4px solid var(--primary); background: var(--sidebar-bg); }
+.result-subheading { margin-top: 1.5rem !important; }
+.baumbach-page button:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 1050px) { .party-card-grid { grid-template-columns: 1fr; } .result-party-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 850px) { .claim-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) {
+  .baumbach-page .top-area .content, .baumbach-page .form-card, .baumbach-page .status-message { width: 100%; max-width: calc(100vw - 32px); }
+  .baumbach-page h1, .baumbach-page .page-intro, .baumbach-page .section-hint, .baumbach-page label { overflow-wrap: anywhere; }
+  .baumbach-page .section-heading-row { display: grid; }
+  .baumbach-page .compact-actions { display: grid; grid-template-columns: 1fr; }
+  .baumbach-page .compact-actions button, .baumbach-page #addClaim { width: 100%; }
+  .party-entry { width: 100%; max-width: 100%; grid-template-columns: 2rem minmax(0, 1fr) 2.75rem; }
+  .party-entry .entry-number { grid-column: 1; grid-row: 1; }
+  .party-entry label:nth-of-type(1) { grid-column: 2; grid-row: 1; }
+  .party-entry [data-remove-party] { grid-column: 3; grid-row: 1; }
+  .party-entry label:nth-of-type(2) { grid-column: 2 / 4; grid-row: 2; }
+  .claim-entry-head { grid-template-columns: 2rem minmax(0, 1fr) 2.75rem; }
+  .claim-fields, .display-settings .three-columns, .result-party-grid { grid-template-columns: 1fr; }
+  .responsive-review, .responsive-review tbody, .responsive-review tr, .responsive-review th, .responsive-review td { display: block; width: 100%; }
+  .responsive-review thead { display: none; }
+  .responsive-review tbody tr { margin-bottom: .8rem; padding: .7rem; border: 1px solid var(--border); border-radius: 8px; }
+  .responsive-review tbody th { border: 0; }
+  .responsive-review tbody td { display: grid; grid-template-columns: 1fr 1fr; align-items: center; border: 0; text-align: right; }
+  .responsive-review tbody td::before { content: attr(data-label); text-align: left; font-weight: 700; }
+  .responsive-review tfoot { display: table; width: 100%; }
 }

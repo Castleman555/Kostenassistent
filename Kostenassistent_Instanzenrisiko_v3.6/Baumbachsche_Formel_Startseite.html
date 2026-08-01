@@ -1,2 +1,83 @@
 <!DOCTYPE html>
-<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Baumbachsche Formel Startseite</title><link rel="stylesheet" href="Richterassistent.css"></head><body><main class="future-area"><div class="form-card"><h1>Baumbachsche Formel Startseite</h1><p>Dieses Modul ist für eine spätere Erweiterung des Kostenassistenten vorgesehen.</p><p><a class="secondary-button link-button" href="Richterassistent_Startseite.html">Zurück zum Kostenassistenten</a></p></div></main></body></html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baumbachsche Formel – Kostenassistent</title>
+  <link rel="stylesheet" href="Richterassistent.css">
+</head>
+<body class="baumbach-page">
+  <div class="page-layout">
+    <aside class="sidebar" aria-label="Navigation">
+      <h2 class="tree-title">Kostenassistent BETA mit Fehlern</h2>
+      <ol class="step-list" aria-label="Arbeitsschritte">
+        <li class="active" data-step-indicator="1"><span>1</span> Fall erfassen</li>
+        <li data-step-indicator="2"><span>2</span> Ergebnis prüfen</li>
+        <li data-step-indicator="3"><span>3</span> Texte übernehmen</li>
+      </ol>
+      <a class="secondary-button link-button sidebar-back" href="Richterassistent_Startseite.html">Zurück zur Übersicht</a>
+    </aside>
+
+    <div class="main-column">
+      <header class="top-area compact-top-area"><div class="content">
+        <p class="eyebrow">Kostenentscheidung bei mehreren Prozessbeteiligten</p>
+        <h1>Baumbachsche Formel (In der Entwicklung befindliche BETA-Version mit Fehlern!)</h1>
+        <p class="page-intro">Klage, Widerklage und Drittwiderklage in einer gemeinsamen, nachvollziehbaren Kostenberechnung.</p>
+      </div></header>
+
+      <main class="future-area">
+        <div id="status" class="status-message" role="status" hidden></div>
+        <section id="step1" class="wizard-step" aria-labelledby="step1Title">
+          <form id="baumbachForm" class="form-card" novalidate>
+            <div class="section-heading-row"><div><p class="step-kicker">Schritt 1 von 3</p><h2 id="step1Title">Fall erfassen</h2><p class="section-hint">Legen Sie zuerst die Beteiligten und danach jedes einzelne Prozessverhältnis an.</p></div><button type="button" class="help-button" id="openHelp">Berechnung erklären</button></div>
+
+            <section class="form-section" aria-labelledby="partiesTitle">
+              <div class="section-heading-row"><div><h3 id="partiesTitle">1. Beteiligte</h3><p class="section-hint">Die Rolle beschreibt die ursprüngliche Parteistellung.</p></div><div class="compact-actions"><button type="button" class="secondary-button" data-add-party="plaintiff">+ Kläger</button><button type="button" class="secondary-button" data-add-party="defendant">+ Beklagter</button><button type="button" class="secondary-button" data-add-party="thirdParty">+ Drittwiderbeklagter</button></div></div>
+              <div id="partyList" class="party-card-grid"></div>
+            </section>
+
+            <section class="form-section" aria-labelledby="claimsTitle">
+              <div class="section-heading-row"><div><h3 id="claimsTitle">2. Ansprüche und Prozessverhältnisse</h3><p class="section-hint">Bei mehreren Anspruchsgegnern wird für jeden Gegner eine Zeile angelegt. So bleibt der fiktive Streitwert überprüfbar.</p></div><button type="button" class="secondary-button" id="addClaim">+ Anspruch hinzufügen</button></div>
+              <div id="claimList" class="claim-list"></div>
+              <div class="inline-help"><strong>Gesamtschuld:</strong> Wählen Sie bei zusammengehörenden Ansprüchen dieselbe Gruppe und tragen Sie jeweils denselben gemeinsamen Erfolgsanteil ein. Ein darüber hinausgehender Erfolg wird automatisch als Einzelhaftung behandelt.</div>
+            </section>
+
+            <section class="form-section display-settings" aria-labelledby="displayTitle"><h3 id="displayTitle">3. Darstellung</h3><div class="baumbach-grid three-columns"><label class="field-label">Quotendarstellung<select id="quoteFormat"><option value="fraction">Bruch</option><option value="percent">Prozent</option></select></label><label class="field-label">Nachkommastellen bei Prozenten<select id="percentDigits" disabled><option value="0">keine</option><option value="1">eine</option><option value="2">zwei</option></select></label></div></section>
+            <div id="errorSummary" class="error-summary" role="alert" hidden></div>
+            <div class="form-actions"><button type="submit" class="nav-button form-submit-button">Berechnung prüfen</button></div>
+          </form>
+        </section>
+
+        <section id="step2" class="wizard-step" aria-labelledby="step2Title" hidden>
+          <div class="form-card">
+            <div class="section-heading-row"><div><p class="step-kicker">Schritt 2 von 3</p><h2 id="step2Title">Ergebnis prüfen und anpassen</h2><p class="section-hint">Beträge können direkt in der Übersicht korrigiert werden.</p></div><span id="checkBadge" class="check-badge"></span></div>
+            <div id="reviewEditor"></div>
+            <section class="form-section"><h3>Kostenverteilung</h3><div id="calculationReview"></div></section>
+            <div id="reviewErrors" class="error-summary" role="alert" hidden></div>
+            <div class="form-actions"><button id="backToInput" type="button" class="secondary-button">Erfassung bearbeiten</button><button id="approve" type="button" class="nav-button form-submit-button">Berechnung freigeben</button></div>
+          </div>
+        </section>
+
+        <section id="step3" class="wizard-step" aria-labelledby="step3Title" hidden>
+          <div class="form-card">
+            <div class="section-heading-row"><div><p class="step-kicker">Schritt 3 von 3</p><h2 id="step3Title">Formulierungen übernehmen</h2><p class="section-hint">Die Texte bleiben vor dem Kopieren redaktionell bearbeitbar.</p></div><span class="approved-badge">Freigegeben</span></div>
+            <div class="output-grid">
+              <article class="text-output-card"><div class="output-heading"><h3>Kostentenor BETA mit Fehlern</h3><button type="button" class="copy-button" data-copy="tenorOutput">Tenor kopieren</button></div><textarea id="tenorOutput" rows="14"></textarea></article>
+              <article class="text-output-card"><div class="output-heading"><h3>Entscheidungsgründe BETA mit Fehlern</h3><button type="button" class="copy-button" data-copy="reasonsOutput">Gründe kopieren</button></div><textarea id="reasonsOutput" rows="22"></textarea></article>
+            </div>
+            <div class="legal-note"><strong>Prüfhinweis:</strong> Voraussetzungen von Gesamtschuld, Streitwertaddition und besondere kostenrechtliche Entscheidungen sind stets am Einzelfall zu prüfen.</div>
+            <div class="form-actions"><button id="backToReview" type="button" class="secondary-button">Berechnung ändern</button><button id="restart" type="button" class="secondary-button">Neue Berechnung</button></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="helpDialog"><form method="dialog"><button class="dialog-close" aria-label="Schließen">×</button><h2>So wird gerechnet</h2><ol><li>Jedes konkrete Prozessverhältnis wird mit seinem Anspruchswert erfasst.</li><li>Die Summe bildet den fiktiven Streitwert.</li><li>Gerichtskosten werden nach dem Unterliegen aller Beteiligten am fiktiven Streitwert verteilt.</li><li>Außergerichtliche Kosten werden für jede Partei nur aus ihren eigenen Prozessverhältnissen berechnet.</li><li>Gemeinsame und alleinige Kostenhaftung werden getrennt ausgewiesen.</li></ol><button class="secondary-button">Verstanden</button></form></dialog>
+  <script src="js/form-utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/baumbach-berechnung.js"></script>
+  <script src="js/baumbach-tests.js"></script>
+  <script src="js/baumbach.js"></script>
+</body>
+</html>
