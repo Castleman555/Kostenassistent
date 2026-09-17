@@ -31,10 +31,10 @@
       assertCent(claim.successCent, `Erfolg ${index + 1}`);
       if (claim.amountCent <= 0) throw new TypeError(`Forderung ${index + 1} muss größer als null sein.`);
       if (claim.successCent > claim.amountCent) throw new TypeError(`Der Erfolg in Prozessverhältnis ${index + 1} übersteigt die Forderung.`);
-      if (claim.jointGroupId) {
-        assertCent(claim.jointShareCent, `Gesamtschuldanteil ${index + 1}`);
-        if (claim.jointShareCent <= 0 || claim.jointShareCent > claim.successCent) throw new TypeError(`Der Gesamtschuldanteil in Prozessverhältnis ${index + 1} ist unplausibel.`);
-      }
+      const shares = Array.isArray(claim.jointShares) ? claim.jointShares : (claim.jointGroupId ? [{ groupId: claim.jointGroupId, amountCent: claim.jointShareCent }] : []);
+      shares.forEach(share => { assertCent(share.amountCent, `Gesamtschuldanteil ${index + 1}`); if (!share.groupId || share.amountCent <= 0) throw new TypeError(`Der Gesamtschuldanteil in Prozessverhältnis ${index + 1} ist unplausibel.`); });
+      if (shares.reduce((sum, share) => sum + share.amountCent, 0) > claim.successCent) throw new TypeError(`Die Gesamtschuldanteile in Prozessverhältnis ${index + 1} übersteigen das Unterliegen.`);
+      claim.jointShares = shares;
     });
 
     const fictitiousValueCent = claims.reduce((sum, claim) => sum + claim.amountCent, 0);
@@ -63,15 +63,15 @@
     });
 
     const jointGroups = new Map();
-    claims.filter((claim) => claim.jointGroupId).forEach((claim) => {
-      const key = claim.jointGroupId;
+    claims.forEach((claim) => claim.jointShares.forEach((share) => {
+      const key = share.groupId;
       const group = jointGroups.get(key) || { id: key, payerIds: [], beneficiaryIds: [], weightCent: 0, claims: [] };
       if (!group.payerIds.includes(claim.againstId)) group.payerIds.push(claim.againstId);
       if (!group.beneficiaryIds.includes(claim.fromId)) group.beneficiaryIds.push(claim.fromId);
-      group.weightCent += claim.jointShareCent;
+      group.weightCent += share.amountCent;
       group.claims.push(claim.id);
       jointGroups.set(key, group);
-    });
+    }));
     jointGroups.forEach((group) => {
       if (group.payerIds.length < 2) throw new TypeError(`Die Gesamtschuldgruppe „${group.id}“ benötigt mindestens zwei Kostenschuldner.`);
       if (group.beneficiaryIds.length !== 1) throw new TypeError(`Die Gesamtschuldgruppe „${group.id}“ muss denselben Anspruchsteller betreffen.`);
@@ -79,8 +79,8 @@
 
     const groupedByParty = new Map();
     jointGroups.forEach((group) => group.payerIds.forEach((partyId) => {
-      const ownClaims = claims.filter((claim) => claim.jointGroupId === group.id && claim.againstId === partyId);
-      groupedByParty.set(partyId, (groupedByParty.get(partyId) || 0) + ownClaims.reduce((sum, claim) => sum + claim.jointShareCent, 0));
+      const ownShares = claims.filter((claim) => claim.againstId === partyId).flatMap(claim => claim.jointShares.filter(share => share.groupId === group.id));
+      groupedByParty.set(partyId, (groupedByParty.get(partyId) || 0) + ownShares.reduce((sum, share) => sum + share.amountCent, 0));
     }));
 
     const results = [...partyResults.values()].map((party) => {

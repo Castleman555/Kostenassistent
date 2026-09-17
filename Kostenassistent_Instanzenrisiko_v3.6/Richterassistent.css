@@ -481,6 +481,58 @@ a:focus-visible {
   .group-row { grid-template-columns: 1fr; }
 }
 
+/* Baumbach 3.0: urteilsorientierte Erfassung */
+.decision-text-grid { display: grid; grid-template-columns: minmax(9rem,.55fr) minmax(0,1fr) minmax(0,1fr); gap: .7rem; align-items: start; }
+.decision-text-head { padding: .55rem .7rem; border-radius: 6px; background: var(--sidebar-bg); font-weight: 700; }
+.decision-kind { padding: .75rem .35rem; color: var(--primary); font-weight: 800; }
+.decision-text-grid label { display: grid; gap: .35rem; font-size: .88rem; font-weight: 700; }
+.decision-text-grid textarea { width: 100%; min-height: 5.5rem; max-height: 17.5rem; padding: .7rem; border: 1px solid var(--border); border-radius: 8px; resize: vertical; font: inherit; line-height: 1.45; }
+.case-settings-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .8rem; }
+.case-settings-grid > label:not(.check-option) { display: grid; gap: .4rem; font-weight: 700; }
+.case-settings-grid input[type="number"] { width: 100%; }
+.check-option { display: flex; align-items: center; gap: .55rem; min-height: 44px; padding: .65rem .75rem; border: 1px solid var(--border); border-radius: 8px; background: #fbfcfd; font-weight: 700; }
+.check-option input { width: 1.15rem; height: 1.15rem; }
+.legend-suggestion, .suggestion-badge { display: inline-flex; align-items: center; gap: .35rem; color: #714b00; font-size: .84rem; font-weight: 700; }
+.relationship-block + .relationship-block { margin-top: 1.5rem; }
+.relationship-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: .6rem; }
+.relationship-heading h4 { margin: 0; color: var(--primary); }
+.pair-adder { display: flex; align-items: end; gap: .5rem; }
+.pair-adder label { display: grid; gap: .3rem; font-size: .84rem; font-weight: 700; }
+.pair-adder select { min-width: 18rem; }
+.relationship-table th:first-child { min-width: 16rem; }
+.relationship-table td { white-space: nowrap; }
+.relationship-table td input { width: 8rem; text-align: right; }
+.relationship-table .suggested-row { background: #fff9e8; box-shadow: inset 4px 0 #a46b00; }
+.suggestion-badge { display: flex; margin-top: .35rem; }
+.relationship-table td:last-child { display: flex; gap: .35rem; }
+.empty-table, .empty-state { padding: 1rem; color: var(--muted); text-align: center !important; }
+.joint-table td:first-child span { display: block; margin-top: .2rem; color: var(--muted); }
+.joint-table input { width: 9rem; text-align: right; }
+.baumbach-page [hidden] { display: none !important; }
+.dialog-fields { display:grid; gap:1rem; margin-top:1rem; }
+.dialog-fields > label { display:grid; gap:.4rem; font-weight:700; }
+.dialog-fields fieldset { margin:0; padding:1rem; border:1px solid var(--border); border-radius:8px; }
+@media (max-width: 900px) { .decision-text-grid { grid-template-columns: 8rem minmax(0,1fr); } .decision-text-head:nth-child(3) { display:none; } .decision-text-grid label { grid-column:2; } .decision-kind { grid-row:span 2; } .case-settings-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 700px) {
+  .decision-text-grid { display:block; }
+  .decision-text-head { display:none; }
+  .decision-kind { margin-top:1rem; padding:.45rem 0; border-bottom:2px solid var(--primary); }
+  .decision-text-grid label { margin-top:.65rem; }
+  .case-settings-grid { grid-template-columns:1fr; }
+  .relationship-heading, .pair-adder { display:grid; grid-template-columns:1fr; align-items:stretch; }
+  .pair-adder select, .pair-adder button { width:100%; min-width:0; }
+  .relationship-table, .relationship-table tbody, .relationship-table tr, .relationship-table th, .relationship-table td, .joint-table, .joint-table tbody, .joint-table tr, .joint-table td { display:block; width:100%; }
+  .relationship-table thead, .joint-table thead { display:none; }
+  .relationship-table tr, .joint-table tr { margin-bottom:.8rem; padding:.75rem; border:1px solid var(--border); border-radius:8px; background:#fff; }
+  .relationship-table th, .relationship-table td, .joint-table td { min-width:0 !important; padding:.45rem 0; border:0; white-space:normal; }
+  .relationship-table td, .joint-table td { display:grid; grid-template-columns:minmax(8rem,.8fr) minmax(0,1.2fr); align-items:center; gap:.5rem; text-align:right; }
+  .relationship-table td::before, .joint-table td::before { content:attr(data-label); text-align:left; font-weight:700; }
+  .relationship-table td input, .joint-table input { width:100%; min-width:0; }
+  .relationship-table td:last-child { display:flex; justify-content:flex-end; }
+  .relationship-table .suggested-row { box-shadow:inset 4px 0 #a46b00; }
+}
+@media (prefers-reduced-motion: reduce) { .baumbach-page * { scroll-behavior:auto !important; transition:none !important; } }
+
 
 /* Nicht blockierende Statusmeldung für Wiederherstellung und Autosave */
 .autosave-status {
