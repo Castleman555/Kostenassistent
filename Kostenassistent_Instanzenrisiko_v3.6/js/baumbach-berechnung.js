@@ -17,6 +17,52 @@
     return { numerator: numerator / divisor, denominator: denominator / divisor, decimal: numerator / denominator };
   }
 
+  // Verteilt die kleinsten darstellbaren Prozenteinheiten nach den größten
+  // Nachkommaresten. Bei gleichen Resten bleibt die Eingabereihenfolge stabil.
+  function allocateDisplayedPercentages(parts, digits = 0) {
+    const places = Math.min(2, Math.max(0, Number.parseInt(digits, 10) || 0));
+    const scale = 10 ** places;
+    const targetUnits = 100 * scale;
+    const snapshot = parts.map(part => ({ numerator: part.numerator, denominator: part.denominator }));
+    snapshot.forEach((part, index) => {
+      if (!Number.isInteger(part.numerator) || !Number.isInteger(part.denominator) || part.numerator < 0 || part.denominator <= 0) {
+        throw new TypeError(`Quote ${index + 1} ist ungültig.`);
+      }
+    });
+    const exactTotal = snapshot.reduce((sum, part) => sum + part.numerator / part.denominator, 0);
+    if (Math.abs(exactTotal - 1) > 1e-10) throw new RangeError("Die exakten Anteile ergeben nicht 100 Prozent.");
+    const entries = snapshot.map((part, index) => {
+      const scaledNumerator = BigInt(part.numerator) * BigInt(targetUnits);
+      const denominator = BigInt(part.denominator);
+      return { index, units: Number(scaledNumerator / denominator), remainder: scaledNumerator % denominator, denominator };
+    });
+    let remaining = targetUnits - entries.reduce((sum, entry) => sum + entry.units, 0);
+    const order = [...entries].sort((a, b) => {
+      const left = a.remainder * b.denominator;
+      const right = b.remainder * a.denominator;
+      return left === right ? a.index - b.index : (left > right ? -1 : 1);
+    });
+    for (let i = 0; i < remaining; i += 1) order[i % order.length].units += 1;
+    const values = entries.sort((a, b) => a.index - b.index).map(entry => entry.units / scale);
+    const sumUnits = entries.reduce((sum, entry) => sum + entry.units, 0);
+    return Object.freeze({ values: Object.freeze(values), digits: places, scale, sum: sumUnits / scale, sumUnits, targetUnits, distributedUnits: remaining });
+  }
+
+  function verifyDisplayedPercentages(values, digits = 0) {
+    const scale = 10 ** Math.min(2, Math.max(0, Number.parseInt(digits, 10) || 0));
+    return values.reduce((sum, value) => sum + Math.round(Number(value) * scale), 0) === 100 * scale;
+  }
+
+  function percentagesFromCourtTenor(tenorText) {
+    const courtSentence = String(tenorText || "").split(/\r?\n/)[0] || "";
+    return [...courtSentence.matchAll(/(\d+(?:[.,]\d+)?)\s*%/g)].map(match => Number(match[1].replace(",", ".")));
+  }
+
+  function verifyCourtTenorText(tenorText, digits = 0) {
+    const values = percentagesFromCourtTenor(tenorText);
+    return values.length > 0 && verifyDisplayedPercentages(values, digits);
+  }
+
   function calculate(input) {
     const parties = Array.isArray(input?.parties) ? input.parties.map((party) => ({ ...party })) : [];
     const claims = Array.isArray(input?.claims) ? input.claims.map((claim) => ({ ...claim })) : [];
@@ -105,5 +151,5 @@
     });
   }
 
-  global.BaumbachBerechnung = Object.freeze({ calculate, ratio, gcd });
+  global.BaumbachBerechnung = Object.freeze({ calculate, ratio, gcd, allocateDisplayedPercentages, verifyDisplayedPercentages, percentagesFromCourtTenor, verifyCourtTenorText });
 })(window);

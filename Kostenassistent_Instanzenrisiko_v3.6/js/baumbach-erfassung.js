@@ -2,6 +2,7 @@
   "use strict";
 
   const TYPES = Object.freeze({ claim: ["plaintiff", "defendant"], counterclaim: ["defendant", "plaintiff"], thirdPartyCounterclaim: ["defendant", "thirdParty"] });
+  const DEFAULT_QUOTE_FORMAT = "percent";
 
   function combinations(items) {
     const result = [];
@@ -15,10 +16,20 @@
     return result;
   }
 
+  const ROLE_FORMS = Object.freeze({
+    plaintiff: { nominative: "die klägerische Partei", genitive: "der klägerischen Partei", bare: "klägerische Partei", plural: "die klägerischen Parteien" },
+    defendant: { nominative: "die beklagte Partei", genitive: "der beklagten Partei", bare: "beklagte Partei", plural: "die beklagten Parteien" },
+    thirdParty: { nominative: "die drittwiderbeklagte Partei", genitive: "der drittwiderbeklagten Partei", bare: "drittwiderbeklagte Partei", plural: "die drittwiderbeklagten Parteien" }
+  });
+
+  function partyLabel(role, index, count, grammaticalCase = "nominative") {
+    const forms = ROLE_FORMS[role] || ROLE_FORMS.thirdParty;
+    const base = forms[grammaticalCase] || forms.nominative;
+    return count === 1 ? base : `${base} zu ${index + 1})`;
+  }
+
   function partyName(role, index, count) {
-    if (role === "plaintiff") return count === 1 ? "der Kläger" : `der Kläger zu ${index + 1})`;
-    if (role === "defendant") return count === 1 ? "der Beklagte" : `der Beklagte zu ${index + 1})`;
-    return count === 1 ? "der Drittwiderbeklagte" : `der Drittwiderbeklagte zu ${index + 1})`;
+    return partyLabel(role, index, count, "nominative");
   }
 
   function makeParties(config) {
@@ -97,5 +108,5 @@
     return combinations(parties.filter(p => p.role === debtorRole).map(p => p.id));
   }
 
-  global.BaumbachErfassung = Object.freeze({ TYPES, combinations, makeParties, allPairs, pairKey, reconcile, suggestFromTexts, availableJointGroups });
+  global.BaumbachErfassung = Object.freeze({ TYPES, DEFAULT_QUOTE_FORMAT, ROLE_FORMS, partyLabel, combinations, makeParties, allPairs, pairKey, reconcile, suggestFromTexts, availableJointGroups });
 })(window);

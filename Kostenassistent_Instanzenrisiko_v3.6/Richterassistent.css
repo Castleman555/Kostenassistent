@@ -533,6 +533,20 @@ a:focus-visible {
 }
 @media (prefers-reduced-motion: reduce) { .baumbach-page * { scroll-behavior:auto !important; transition:none !important; } }
 
+/* Baumbach 3.1: fortlaufende Live-Ausgabe */
+.static-section-list li { color:var(--text); }
+.static-section-list li a { color:var(--primary); text-decoration:none; font-weight:700; }
+.static-section-list li a:hover, .static-section-list li a:focus-visible { text-decoration:underline; }
+.static-section-list li span { border-color:var(--primary); color:var(--primary); }
+.live-unavailable { border-left:5px solid #b7791f; background:#fffaf0; }
+.live-unavailable h2 { color:#744210; }
+.live-unavailable .error-summary { margin-top:1rem; }
+.check-stack { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.5rem; }
+.output-stack { display:grid; gap:1.25rem; }
+.output-stack .text-output-card { min-width:0; }
+.copy-button:disabled { opacity:.45; cursor:not-allowed; }
+@media (max-width:700px) { .check-stack { justify-content:flex-start; } .output-stack textarea { max-width:100%; } }
+
 
 /* Nicht blockierende Statusmeldung für Wiederherstellung und Autosave */
 .autosave-status {

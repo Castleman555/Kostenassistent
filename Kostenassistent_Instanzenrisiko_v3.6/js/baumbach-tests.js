@@ -35,8 +35,26 @@
       assert(suggestions.find(x=>x.type==="claim").amountCent===800000&&!suggestions.find(x=>x.type==="claim").confirmed,"Textwerte müssen unbestätigte Vorschläge bleiben.");
       assert(capture.availableJointGroups(base.parties,"claim").length===1,"Bei zwei Beklagten muss eine Gesamtschuldgruppe entstehen.");
       assert(capture.combinations([1,2,3]).length===4,"Bei drei Beteiligten müssen vier Teilgruppen entstehen.");
-      cases.push("Erfassung 2x2","Werterhalt","selektive Widerklage","eindeutige Drittwiderklage","Textvorschläge","Gesamtschuldgruppen");
+      assert(capture.DEFAULT_QUOTE_FORMAT==="percent","Neue Fälle müssen Prozentdarstellung verwenden.");
+      assert(capture.partyLabel("plaintiff",0,1)==="die klägerische Partei","Neutrale Bezeichnung der klägerischen Partei fehlt.");
+      assert(capture.partyLabel("defendant",1,2,"genitive")==="der beklagten Partei zu 2)","Genitiv der nummerierten beklagten Partei ist falsch.");
+      assert(capture.partyLabel("thirdParty",0,1)==="die drittwiderbeklagte Partei","Neutrale Bezeichnung der drittwiderbeklagten Partei fehlt.");
+      cases.push("Erfassung 2x2","Werterhalt","selektive Widerklage","eindeutige Drittwiderklage","Textvorschläge","Gesamtschuldgruppen","Prozentstandard","neutrale Parteibezeichnungen");
     }
+    const equal=api.allocateDisplayedPercentages([api.ratio(1,3),api.ratio(1,3),api.ratio(1,3)],0);
+    assert(JSON.stringify(equal.values)==="[34,33,33]"&&equal.sum===100,"Drei gleiche Anteile müssen stabil 34/33/33 ergeben.");
+    const sixths=api.allocateDisplayedPercentages([api.ratio(1,6),api.ratio(2,6),api.ratio(3,6)],0);
+    assert(sixths.sum===100&&api.verifyDisplayedPercentages(sixths.values,0),"Sechstelquoten müssen sichtbar 100 Prozent ergeben.");
+    const oneDigit=api.allocateDisplayedPercentages([api.ratio(1,3),api.ratio(1,3),api.ratio(1,3)],1);
+    const twoDigits=api.allocateDisplayedPercentages([api.ratio(1,3),api.ratio(1,3),api.ratio(1,3)],2);
+    assert(oneDigit.sum===100&&twoDigits.sum===100,"Eine und zwei Nachkommastellen müssen exakt 100 Prozent ergeben.");
+    const tiny=api.allocateDisplayedPercentages([api.ratio(1,10000),api.ratio(9999,10000)],2);
+    assert(tiny.sum===100,"Sehr kleine positive Anteile müssen stabil verarbeitet werden.");
+    const source=[api.ratio(1,3),api.ratio(2,3)],snapshot=JSON.stringify(source);api.allocateDisplayedPercentages(source,0);assert(JSON.stringify(source)===snapshot,"Prozentverteilung darf Eingaben nicht verändern.");
+    const tenor="Von den Gerichtskosten tragen die klägerische Partei 34 % und die beklagten Parteien 66 %.";
+    assert(api.verifyCourtTenorText(tenor,0),"Die tatsächlich geschriebenen Tenorquoten müssen geprüft werden.");
+    assert(!api.verifyCourtTenorText(tenor.replace("66 %","65 %"),0),"Ein Tenor mit 99 Prozent muss abgelehnt werden.");
+    cases.push("Größte-Reste-Verfahren","Nachkommastellen","kleine Anteile","unveränderte Eingaben","Tenor-Gegenprobe");
     return { passed: cases.length + 1, cases };
   }
   global.BaumbachTests = Object.freeze({ run });
